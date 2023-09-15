@@ -1,0 +1,8 @@
+# IDE and tools
+.vscode
+.cache
+
+# Build results
+bin
+build
+compile_commands.json
