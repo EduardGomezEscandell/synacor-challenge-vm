@@ -19,7 +19,6 @@ int main(int argc , char** argv) {
 
   SynacorVM::CPU vm;
   vm.Load(f);
-
   vm.Run();
 
   f.close();

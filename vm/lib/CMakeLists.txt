@@ -6,3 +6,5 @@ add_library(libvm
 
 set_target_properties(libvm PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(libvm INTERFACE ..)
+
+target_link_libraries(libvm PUBLIC archlib)
