@@ -6,7 +6,6 @@
 
 #include "lib/tokenizer.hpp"
 
-void cout_tokenized(std::vector<Token> const&);
 
 int main(int argc, char** argv) {
   if (argc != 2) {
@@ -18,19 +17,9 @@ int main(int argc, char** argv) {
 
   const auto out = tokenize(f);
   std::cout << "Tokenization:\n";
-  cout_tokenized(out);
+  fmt_tokens(std::cout, out);
 
   f.close();
 
   return EXIT_SUCCESS;
-}
-
-void cout_tokenized(std::vector<Token> const& tokenized) {
-  for (auto const& token : tokenized) {
-    std::cout << token.fmt() << ' ';
-    if (token.type == Token::EOL) {
-      std::cout << '\n';
-    }
-  }
-  std::cout << '\n';
 }

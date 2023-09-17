@@ -1,15 +1,8 @@
 #pragma once
 
-#include <algorithm>
-#include <cassert>
-#include <cctype>
-#include <cstddef>
-#include <istream>
-#include <numeric>
-#include <utility>
 #include <vector>
-#include <utility>
-#include <utility>
+#include <iosfwd>
+#include <string>
 
 struct Token {
   enum Type {
@@ -60,7 +53,8 @@ struct TokenParser {
   Token consume(char ch);
 
  private:
-  bool error(std::string&& msg) {
+  bool error(char ch, std::string&& msg) {
+    prev_char = ch;
     type = Token::ERROR;
     identifier = std::forward<std::string>(msg);
     return false;
@@ -86,3 +80,5 @@ struct TokenParser {
 }  // namespace
 
 std::vector<Token> tokenize(std::istream& is);
+
+std::ostream& fmt_tokens(std::ostream& out, std::vector<Token> const& tokenized);

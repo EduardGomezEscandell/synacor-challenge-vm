@@ -27,7 +27,7 @@
 ```
 push r0 'a'
 loop:
-    add r0 r1 0x1
+    add r0 r0 0x1
     eq r0 'z'
     out r0
     jt loop
@@ -36,7 +36,7 @@ Tokenization:
 ```
 <IDENTIFIER push> <REGISTER 0> <CHARACTER a> <EOL>
 <TAG_DECL loop> <EOL>
-<IDENTIFIER add> <REGISTER 0> <REGISTER 1> <NUMBER 1> <EOL>
+<IDENTIFIER add> <REGISTER 0> <REGISTER 0> <NUMBER 1> <EOL>
 <IDENTIFIER eq> <REGISTER 0> <CHARACTER z> <EOL>
 <IDENTIFIER out> <REGISTER 0> <EOL>
 <IDENTIFIER jt> <IDENTIFIER loop> <EOL>

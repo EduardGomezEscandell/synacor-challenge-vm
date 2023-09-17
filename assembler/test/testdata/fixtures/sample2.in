@@ -1,0 +1,14 @@
+push r0 text
+loop:
+    read r8 r0
+    out r8
+
+    add r0 r0 1
+
+    eq r1 r0 endtext
+    jt loop
+halt
+
+text:
+    "Hello, world!"
+endtext:

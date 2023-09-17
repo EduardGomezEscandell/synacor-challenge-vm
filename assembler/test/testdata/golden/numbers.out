@@ -1,0 +1,8 @@
+<NUMBER 0> <EOL>
+<NUMBER 16> <EOL>
+<NUMBER 21> <EOL>
+<NUMBER 28> <EOL>
+<ERROR Unexpected end of digit in base-16 number literal>
+<ERROR Unexpected end of digit in base-2 number literal>
+<NUMBER 0> <EOL>
+<END>
