@@ -6,7 +6,10 @@
 #include <cstddef>
 #include <istream>
 #include <numeric>
+#include <utility>
 #include <vector>
+#include <utility>
+#include <utility>
 
 struct Token {
   enum Type {
@@ -26,7 +29,6 @@ struct Token {
 
     // Other
     ERROR
-
   };
 
   std::wstring wstr() const;
@@ -45,27 +47,40 @@ namespace {
 
 struct TokenParser {
   int len = 0;
+  Token::Type type = Token::NONE;
 
+  // Numeric helpers
   unsigned num_base = 0;
-
   unsigned value = 0;
 
+  // Text helpers helpers
   char prev_char;
   std::string identifier = {};
 
-  Token::Type type = Token::NONE;
-
-  Token ingest(char ch);
+  Token consume(char ch);
 
  private:
-  bool first_byte(char ch);
+  bool error(std::string&& msg) {
+    type = Token::ERROR;
+    identifier = std::forward<std::string>(msg);
+    return false;
+  }
 
+  void first_byte(char ch);
+
+  bool consume_EOL(char ch);
   bool consume_IDENTIFIER(char ch);
   bool consume_NUMBER(char ch);
   bool consume_CHARACTER(char ch);
   bool consume_STRING(char ch);
+  bool consume_ERROR(char ch);
 
-  Token produce();
+  Token finalize();
+
+  Token finalize_NUMBER();
+  Token finalize_CHARACTER();
+  Token finalize_STRING();
+  Token finalize_IDENTIFIER();
 };
 
 }  // namespace

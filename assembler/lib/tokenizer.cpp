@@ -1,59 +1,65 @@
 #include "tokenizer.hpp"
 
 #include <cassert>
+#include <cctype>
 #include <format>
 #include <ios>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
 
-std::vector<std::byte> str_to_bytes(std::string str) {
-  std::vector<std::byte> out;
-  out.reserve(2 * str.size());
-  for (auto c : str) {
-    out.push_back(std::byte(c));
-    out.push_back(std::byte(0));
+std::vector<std::byte> str_to_bytes(std::string str);
+constexpr std::optional<char> escape(char ch);
+
+std::vector<Token> tokenize(std::istream &is) {
+  std::vector<Token> tokenized;
+  TokenParser p;
+
+  std::size_t row = 1;
+  std::size_t col = 0;
+
+  const auto consume = [&](char ch) {
+    auto token = p.consume(ch);
+    if (token.type == Token::NONE) {
+      return;
+    }
+
+    tokenized.push_back(token);
+
+    if (token.type == Token::ERROR) {
+      std::cerr << std::format("Error parsing line {}, col {}: {}\n", row, col,
+                               token.as_str());
+    }
+  };
+
+  while (is) {
+    const auto ch = static_cast<char>(is.get());
+    ++col;
+
+    if (ch == EOF) {
+      consume('\n');
+    }
+
+    consume(ch);
+
+    if (ch == '\n') {
+      ++row;
+      col = 0;
+    }
   }
 
-  return out;
+  tokenized.push_back(Token{.type = Token::END});
+  return tokenized;
 }
 
-constexpr std::optional<char> escape(char ch) noexcept {
-  switch (ch) {
-    case '0':
-      return 0;
-    case 'n':
-      return '\n';
-    case 't':
-      return '\t';
-    case 'v':
-      return '\v';
-    case 'b':
-      return '\b';
-    case 'r':
-      return '\r';
-    case 'f':
-      return '\f';
-    case 'a':
-      return '\a';
-    case '\\':
-      return '\\';
-    case '\'':
-      return '\'';
-    case '"':
-      return '\"';
-  }
-
-  return {};
-}
-
-Token TokenParser::ingest(char ch) {
+Token TokenParser::consume(char ch) {
   const bool done = [this, ch]() -> bool {
     switch (type) {
-      case Token::EOL:
-        // Fallthrough
       case Token::NONE:
-        return first_byte(ch);
+        first_byte(ch);
+        return false;
+      case Token::EOL:
+        return consume_EOL(ch);
       case Token::IDENTIFIER:
         return consume_IDENTIFIER(ch);
       case Token::NUMBER:
@@ -62,26 +68,69 @@ Token TokenParser::ingest(char ch) {
         return consume_CHARACTER(ch);
       case Token::STRING:
         return consume_STRING(ch);
+      case Token::ERROR:
+        return consume_ERROR(ch);
+        // The following types are not possible until finalize() is called.
       case Token::REGISTER:
       case Token::DATA:
       case Token::END:
       case Token::TAG_DECL:
         assert(0);  // Unreachable
-      case Token::ERROR:
-        throw std::runtime_error("Consumed character after having errored out");
     }
     assert(0);  // Unreachable
-    return true;
+    return false;
   }();
 
   ++len;
   Token r{};
   if (done) {
-    r = produce();
-    *this = TokenParser{};
+    r = finalize();
+    first_byte(ch);
   }
 
   return r;
+}
+
+void TokenParser::first_byte(char ch) {
+  if (ch == '\n') {
+    type = Token::EOL;
+    return;
+  }
+
+  if (ch == ' ') {
+    return;
+  }
+
+  if (ch == '0') {
+    type = Token::NUMBER;
+    return;
+  }
+
+  if ('1'<= ch && ch <= '9') {
+    num_base = 10;
+    type = Token::NUMBER;
+    value = static_cast<unsigned>(ch - '0');
+    return;
+  }
+
+  if (ch == '\'') {
+    type = Token::CHARACTER;
+    return;
+  }
+
+  if (ch == '"') {
+    type = Token::STRING;
+  }
+
+  type = Token::IDENTIFIER;
+  identifier.push_back(ch);
+}
+
+bool TokenParser::consume_EOL(char ch) {
+  if (ch == '\n' || ch == ' ') {
+    return false;
+  }
+  return true;
 }
 
 bool TokenParser::consume_IDENTIFIER(char ch) {
@@ -89,43 +138,67 @@ bool TokenParser::consume_IDENTIFIER(char ch) {
   if (ch == ' ' || ch == '\n') {
     return true;
   }
-  identifier.push_back(ch);
-  return false;
+
+  if (std::isalnum(ch)) {
+    identifier.push_back(ch);
+    return false;
+  }
+
+  switch (ch) {
+    case '-':
+    case '_':
+    case ':':
+    case '.':
+      identifier.push_back(ch);
+      return false;
+  }
+
+  return error(std::format("Unexpected character in identifier: ascii {}", ch));
 }
 
 bool TokenParser::consume_NUMBER(char ch) {
   if (num_base == 0 && len == 1) {
     if (ch == 'b') {
       num_base = 0b10;
-      len = -1;
+      len -= 2;  // the prefix
       return false;
     }
     if (ch == 'x') {
       num_base = 0x10;
-      len = -1;
+      len -= 2;  // the prefix
       return false;
     }
     if (std::isdigit(ch)) {
       num_base = 010;
       value = static_cast<unsigned>(ch - '0');
-      len = -1;
+      if (value > num_base) {
+        return error(std::format(
+            "Unexpected digit in base-{} number literal: {}", num_base, ch));
+      }
+      len -= 1;  // the prefix
       return false;
     }
+
+    if(ch == ' ' || ch == '\n') {
+      value = 0;
+      return true;
+    }
+
+    return error(std::format("Unknown prefix"));
   }
 
   if (ch == ' ' || ch == '\n') {
     if (len != 0) {
       return true;
     }
-    type = Token::ERROR;
-    identifier = std::format(
-        "Unexpected end of digit in base-{} number literal", num_base);
-    return true;
+    return error(std::format(
+        "Unexpected end of digit in base-{} number literal", num_base));
   }
 
   unsigned digit = 0;
   if (ch == '_') {
     // Ignored separator
+    --len;
     return false;
   } else if ('0' <= ch && ch <= '9') {
     digit = static_cast<unsigned>(ch - '0');
@@ -134,17 +207,13 @@ bool TokenParser::consume_NUMBER(char ch) {
   } else if ('A' <= ch && ch <= 'Z') {
     digit = static_cast<unsigned>(ch - 'A');
   } else {
-    type = Token::ERROR;
-    identifier = std::format("Unexpected digit in base-{} number literal: {}",
-                             num_base, ch);
-    return true;
+    return error(std::format("Unexpected digit in base-{} number literal: {}",
+                             num_base, ch));
   }
 
   if (digit > num_base) {
-    type = Token::ERROR;
-    identifier = std::format("Unexpected digit in base-{} number literal: {}",
-                             num_base, ch);
-    return true;
+    return error(std::format("Unexpected digit in base-{} number literal: {}",
+                             num_base, ch));
   }
 
   value = value * num_base + digit;
@@ -158,8 +227,7 @@ bool TokenParser::consume_CHARACTER(char ch) {
       return false;
     case 1:
       if (ch == '\n') {
-        type = Token::ERROR;
-        identifier = "Unexpected end of character literal";
+        return error("Unexpected end of character literal");
       }
       if (ch == '\\') {
         prev_char = ch;
@@ -170,8 +238,7 @@ bool TokenParser::consume_CHARACTER(char ch) {
       return false;
     case 2:
       if (ch == '\n') {
-        type = Token::ERROR;
-        identifier = "Unexpected end of character literal";
+        return error("Unexpected end of character literal");
       }
 
       if (prev_char == '\\') {
@@ -182,27 +249,22 @@ bool TokenParser::consume_CHARACTER(char ch) {
           value = static_cast<unsigned>(ch);
           return false;
         }
-        type = Token::ERROR;
-        identifier = std::format("Invalid escaped character ascii {}", int(ch));
-        return true;
+        return error(
+            std::format("Invalid escaped character ascii {}", int(ch)));
       }
 
       if (ch != '\'') {
-        type = Token::ERROR;
-        identifier = std::format(
-            "Expected closing single quote ('), got ascii {}", int(ch));
-        return true;
+        return error(std::format(
+            "Expected closing single quote ('), got ascii {}", int(ch)));
       }
       return false;
     default:
       if (ch == ' ' || ch == '\n') {
         return true;
       }
-      type = Token::ERROR;
-      identifier = std::format(
+      return error(std::format(
           "Unexpected character after closing quote ('), got ascii {}",
-          int(ch));
-      return true;
+          int(ch)));
   }
 }
 
@@ -212,16 +274,13 @@ bool TokenParser::consume_STRING(char ch) {
   }
 
   if (len < 0) {
-    type = Token::ERROR;
-    identifier = std::format(
+    return error(std::format(
         "Unexpected character after closing quote (\"), got: ascii {}",
-        int(ch));
+        int(ch)));
   }
 
   if (ch == '\n') {
-    type = Token::ERROR;
-    identifier = "Missing endquote to close string literal";
-    return true;
+    return error(std::format("Missing endquote to close string literal"));
   }
 
   // Escaped characters
@@ -231,9 +290,7 @@ bool TokenParser::consume_STRING(char ch) {
       prev_char = *x;
       return false;
     }
-    type = Token::ERROR;
-    identifier = std::format("Invalid escaped character \\{}", ch);
-    return true;
+    return error(std::format("Invalid escaped character \\{}", ch));
   }
 
   // End of string
@@ -250,84 +307,30 @@ bool TokenParser::consume_STRING(char ch) {
   return false;
 }
 
-bool TokenParser::first_byte(char ch) {
+bool TokenParser::consume_ERROR(char ch) {
+  // Consume the entire line
   if (ch == '\n') {
-    type = Token::EOL;
     return true;
   }
 
-  if (ch == ' ') {
-    return false;
-  }
-
-  if (ch == '0') {
-    type = Token::NUMBER;
-    return false;
-  }
-
-  if (ch > '1' && ch <= '9') {
-    num_base = 10;
-    type = Token::NUMBER;
-    value = static_cast<unsigned>(ch - '0');
-    return false;
-  }
-
-  if (ch == '\'') {
-    type = Token::CHARACTER;
-    return false;
-  }
-
-  if (ch == '"') {
-    type = Token::STRING;
-  }
-
-  type = Token::IDENTIFIER;
-  identifier.push_back(ch);
   return false;
 }
 
-Token TokenParser::produce() {
+Token TokenParser::finalize() {
   auto r = [this]() -> Token {
     switch (type) {
       case Token::NUMBER:
-        assert(value <= 0xffff);
-        return Token{
-            .type = Token::NUMBER,
-            .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+        return finalize_NUMBER();
       case Token::CHARACTER:
-        return Token{
-            .type = Token::CHARACTER,
-            .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
-      case Token::STRING: {
-        return Token{
-            .type = Token::STRING,
-            .data = str_to_bytes(identifier),
-        };
-      }
-      case Token::EOL:
-        return Token{.type = Token::EOL};
+        return finalize_CHARACTER();
+      case Token::STRING:
+        return finalize_STRING();
       case Token::IDENTIFIER:
-        if (identifier == "data") {
-          return Token{Token::DATA, {}};
-        }
-        if (identifier.starts_with('r') && identifier.size() == 2 &&
-            std::isdigit(identifier[1])) {
-          return Token{
-              .type = Token::REGISTER,
-              .data = {std::byte(identifier[1] - '0'), std::byte(0x80)}};
-        }
-
-        if (identifier.ends_with(":")) {
-          identifier.pop_back();
-          return Token{.type = Token::TAG_DECL,
-                       .data = str_to_bytes(identifier)};
-        }
-
-        return Token{.type = Token::IDENTIFIER,
-                     .data = str_to_bytes(identifier)};
-
+        return finalize_IDENTIFIER();
       case Token::ERROR:
         return Token{.type = Token::ERROR, .data = str_to_bytes(identifier)};
+      case Token::EOL:
+        return Token{.type = Token::EOL};
       case Token::NONE:
         return Token{.type = Token::NONE};
       case Token::REGISTER:
@@ -346,59 +349,40 @@ Token TokenParser::produce() {
   return r;
 }
 
-std::vector<Token> tokenize(std::istream &is) {
-  std::vector<Token> tokenized;
-  TokenParser p;
+Token TokenParser::finalize_NUMBER() {
+  assert(value <= 0xffff);
+  return Token{.type = Token::NUMBER,
+               .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+}
 
-  std::size_t row = 1;
-  std::size_t col = 0;
+Token TokenParser::finalize_CHARACTER() {
+  return Token{.type = Token::CHARACTER,
+               .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+}
 
-  const auto next_char = [&](char ch) -> bool {
-    auto token = p.ingest(ch);
-    if (token.type == Token::NONE) {
-      return false;
-    }
-
-    tokenized.push_back(token);
-
-    if (token.type == Token::ERROR) {
-      std::cerr << std::format("Error parsing line {}, col {}: {}\n", row, col,
-                               token.as_str());
-      return true;
-    }
-
-    if (ch == '\n') {
-      tokenized.push_back(Token{.type = Token::EOL});
-      ++row;
-      col = 0;
-    }
-
-    return false;
+Token TokenParser::finalize_STRING() {
+  return Token{
+      .type = Token::STRING,
+      .data = str_to_bytes(identifier),
   };
+}
 
-  auto skipline = false;
-  while (is) {
-    const auto ch = static_cast<char>(is.get());
-    ++col;
-
-    if (ch == EOF) {
-      next_char('\n');
-      break;
-    }
-
-    if (ch == '\n') {
-      skipline = false;
-    }
-
-    if (skipline) {
-      continue;
-    }
-
-    skipline = next_char(ch);
+Token TokenParser::finalize_IDENTIFIER() {
+  if (identifier == "data") {
+    return Token{Token::DATA, {}};
+  }
+  if (identifier.starts_with('r') && identifier.size() == 2 &&
+      std::isdigit(identifier[1])) {
+    return Token{.type = Token::REGISTER,
+                 .data = {std::byte(identifier[1] - '0'), std::byte(0x80)}};
   }
 
-  tokenized.push_back(Token{.type = Token::END});
-  return tokenized;
+  if (identifier.ends_with(":")) {
+    identifier.pop_back();
+    return Token{.type = Token::TAG_DECL, .data = str_to_bytes(identifier)};
+  }
+
+  return Token{.type = Token::IDENTIFIER, .data = str_to_bytes(identifier)};
 }
 
 std::wstring Token::wstr() const {
@@ -473,4 +457,44 @@ std::string Token::fmt() const {
 
   assert(false);  // Unreachable code
   return "<ERROR BAD CODE!>";
+}
+
+std::vector<std::byte> str_to_bytes(std::string str) {
+  std::vector<std::byte> out;
+  out.reserve(2 * str.size());
+  for (auto c : str) {
+    out.push_back(std::byte(c));
+    out.push_back(std::byte(0));
+  }
+
+  return out;
+}
+
+constexpr std::optional<char> escape(char ch) {
+  switch (ch) {
+    case '0':
+      return 0;
+    case 'n':
+      return '\n';
+    case 't':
+      return '\t';
+    case 'v':
+      return '\v';
+    case 'b':
+      return '\b';
+    case 'r':
+      return '\r';
+    case 'f':
+      return '\f';
+    case 'a':
+      return '\a';
+    case '\\':
+      return '\\';
+    case '\'':
+      return '\'';
+    case '"':
+      return '\"';
+  }
+
+  return {};
 }

@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
   auto f = std::ifstream(argv[1], std::ios_base::binary);
 
   const auto out = tokenize(f);
-  std::cout << std::endl << "Tokenization:\n";
+  std::cout << "Tokenization:\n";
   cout_tokenized(out);
 
   f.close();
