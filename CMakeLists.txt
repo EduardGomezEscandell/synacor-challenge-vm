@@ -14,4 +14,6 @@ endif()
 message("Compiling with: ${CMAKE_CXX_FLAGS}")
 
 add_subdirectory(external_libraries)
+add_subdirectory(arch)
 add_subdirectory(vm)
+add_subdirectory(assembler)
