@@ -8,6 +8,8 @@
 #include <optional>
 #include <stdexcept>
 
+#include "arch/arch.hpp"
+
 std::vector<std::byte> str_to_bytes(std::string str);
 constexpr std::optional<char> escape(char ch);
 
@@ -64,22 +66,23 @@ Token TokenParser::consume(char ch) {
         return false;
       case Token::EOL:
         return consume_EOL(ch);
-      case Token::IDENTIFIER:
+      case Token::UNKNOWN_IDENTIFIER:
         return consume_IDENTIFIER(ch);
-      case Token::NUMBER:
+      case Token::NUMBER_LITERAL:
         return consume_NUMBER(ch);
-      case Token::CHARACTER:
+      case Token::CHARACTER_LITERAL:
         return consume_CHARACTER(ch);
-      case Token::STRING:
+      case Token::STRING_LITERAL:
         return consume_STRING(ch);
       case Token::ERROR:
         return consume_ERROR(ch);
       case Token::END:
         return true;
         // The following types are not possible until finalize() is called.
+      case Token::VERB:
       case Token::REGISTER:
-      case Token::DATA:
       case Token::TAG_DECL:
+      case Token::TAG_REF:
         assert(0);  // Unreachable
     }
     assert(0);  // Unreachable
@@ -113,30 +116,30 @@ void TokenParser::first_byte(char ch) {
   }
 
   if (ch == '0') {
-    type = Token::NUMBER;
+    type = Token::NUMBER_LITERAL;
     return;
   }
 
   if ('1' <= ch && ch <= '9') {
     num_base = 10;
-    type = Token::NUMBER;
+    type = Token::NUMBER_LITERAL;
     value = static_cast<unsigned>(ch - '0');
     return;
   }
 
   if (ch == '\'') {
     --len;
-    type = Token::CHARACTER;
+    type = Token::CHARACTER_LITERAL;
     return;
   }
 
   if (ch == '"') {
-    type = Token::STRING;
+    type = Token::STRING_LITERAL;
     --len;
     return;
   }
 
-  type = Token::IDENTIFIER;
+  type = Token::UNKNOWN_IDENTIFIER;
   identifier.push_back(ch);
 }
 
@@ -342,31 +345,32 @@ bool TokenParser::consume_ERROR(char ch) {
 Token TokenParser::finalize() {
   auto r = [this]() -> Token {
     switch (type) {
-      case Token::NUMBER:
+      case Token::NUMBER_LITERAL:
         return finalize_NUMBER();
-      case Token::CHARACTER:
+      case Token::CHARACTER_LITERAL:
         return finalize_CHARACTER();
-      case Token::STRING:
+      case Token::STRING_LITERAL:
         return finalize_STRING();
-      case Token::IDENTIFIER:
+      case Token::UNKNOWN_IDENTIFIER:
         return finalize_IDENTIFIER();
       case Token::ERROR:
-        return Token{.type = Token::ERROR, .data = str_to_bytes(identifier)};
+        return {.type = Token::ERROR, .data = str_to_bytes(identifier)};
       case Token::EOL:
-        return Token{.type = Token::EOL};
+        return {.type = Token::EOL};
       case Token::NONE:
-        return Token{.type = Token::NONE};
+        return {.type = Token::NONE};
       case Token::END:
-        return Token{.type = Token::END};
+        return {.type = Token::END};
       case Token::REGISTER:
       case Token::TAG_DECL:
-      case Token::DATA:
+      case Token::TAG_REF:
+      case Token::VERB:
         assert(false);  // Unreachable code
-        return Token{.type = Token::ERROR};
+        return {.type = Token::ERROR};
     }
 
     assert(false);  // Unreachable code
-    return Token{.type = Token::ERROR};
+    return {.type = Token::ERROR};
   }();
 
   *this = TokenParser{};
@@ -375,55 +379,42 @@ Token TokenParser::finalize() {
 
 Token TokenParser::finalize_NUMBER() {
   assert(value <= 0xffff);
-  return Token{.type = Token::NUMBER,
-               .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+  return {.type = Token::NUMBER_LITERAL,
+          .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
 }
 
 Token TokenParser::finalize_CHARACTER() {
-  return Token{.type = Token::CHARACTER,
-               .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+  return {.type = Token::CHARACTER_LITERAL,
+          .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
 }
 
 Token TokenParser::finalize_STRING() {
-  return Token{
-      .type = Token::STRING,
+  return {
+      .type = Token::STRING_LITERAL,
       .data = str_to_bytes(identifier),
   };
 }
 
 Token TokenParser::finalize_IDENTIFIER() {
-  if (identifier == "data") {
-    return Token{Token::DATA, {}};
+  if (const auto id = from_string(identifier); id != Verb::ERROR) {
+    return {
+        .type = Token::VERB,
+        .data = {std::byte(id & 0xff), std::byte{}},
+    };
   }
+
   if (identifier.starts_with('r') && identifier.size() == 2 &&
       std::isdigit(identifier[1])) {
-    return Token{.type = Token::REGISTER,
-                 .data = {std::byte(identifier[1] - '0'), std::byte(0x80)}};
+    return {.type = Token::REGISTER,
+            .data = {std::byte(identifier[1] - '0'), std::byte(0x80)}};
   }
 
   if (identifier.ends_with(":")) {
     identifier.pop_back();
-    return Token{.type = Token::TAG_DECL, .data = str_to_bytes(identifier)};
+    return {.type = Token::TAG_DECL, .data = str_to_bytes(identifier)};
   }
 
-  return Token{.type = Token::IDENTIFIER, .data = str_to_bytes(identifier)};
-}
-
-std::wstring Token::wstr() const {
-  std::wstring out;
-  out.reserve(out.size() / 2 + 1);
-  std::size_t i;
-  for (i = 1; i < data.size(); i += 2) {
-    wchar_t ch = wchar_t(data[i - 1]) | wchar_t(data[i]) << 8;
-    out.push_back(ch);
-  }
-
-  if (data.size() % 2 == 1) {
-    wchar_t ch = wchar_t(data[data.size() - 1]);
-    out.push_back(ch);
-  }
-
-  return out;
+  return {.type = Token::TAG_REF, .data = str_to_bytes(identifier)};
 }
 
 std::string Token::as_str() const {
@@ -457,11 +448,11 @@ std::string Token::fmt() const {
   switch (type) {
     case Token::NONE:
       return "{NONE}";
-    case Token::NUMBER:
+    case Token::NUMBER_LITERAL:
       return std::format("<NUMBER {}>", as_number());
-    case Token::CHARACTER:
+    case Token::CHARACTER_LITERAL:
       return std::format("<CHARACTER {}>", as_char());
-    case Token::STRING:
+    case Token::STRING_LITERAL:
       return std::format("<STRING {}>", as_str());
     case Token::EOL:
       return "<EOL>";
@@ -469,12 +460,14 @@ std::string Token::fmt() const {
       return "<END>";
     case Token::REGISTER:
       return std::format("<REGISTER {}>", data.empty() ? -1 : int(data[0]));
-    case Token::DATA:
-      return "<DATA>";
     case Token::TAG_DECL:
       return std::format("<TAG_DECL {}>", as_str());
-    case Token::IDENTIFIER:
-      return std::format("<IDENTIFIER {}>", as_str());
+    case Token::TAG_REF:
+      return std::format("<TAG_REF {}>", as_str());
+    case Token::VERB:
+      return std::format("<VERB {}>", to_string(static_cast<Verb>(as_number())));
+    case Token::UNKNOWN_IDENTIFIER:
+      return std::format("<UNKNOWN_IDENTIFIER {}>", as_str());
     case Token::ERROR:
       return std::format("<ERROR {}>", as_str());
   }

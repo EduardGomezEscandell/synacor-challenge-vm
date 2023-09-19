@@ -6,25 +6,29 @@
 
 struct Token {
   enum Type {
+    // The following tokens must never be returned given a correct parse
     NONE,
 
-    NUMBER,
-    CHARACTER,
-    STRING,
-
-    // Reserved identifiers
-    EOL,
-    END,
+    UNKNOWN_IDENTIFIER, // Identifier, not yet known what type
+    END,                // End of stream
+    ERROR,              // Erroneous input
+    
+    // The following identifiers can be returned
+    // Literals
+    NUMBER_LITERAL,
+    CHARACTER_LITERAL,
+    STRING_LITERAL,
+  
+    // Identifiers
     REGISTER,
-    DATA,
     TAG_DECL,
-    IDENTIFIER,
+    TAG_REF,
+    VERB,
 
-    // Other
-    ERROR
+    // End of line
+    EOL,
   };
 
-  std::wstring wstr() const;
   std::string as_str() const;
   std::string fmt() const;
 
@@ -46,7 +50,7 @@ struct TokenParser {
   unsigned num_base = 0;
   unsigned value = 0;
 
-  // Text helpers helpers
+  // Text helpers
   char prev_char;
   std::string identifier = {};
 
