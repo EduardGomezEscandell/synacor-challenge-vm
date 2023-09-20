@@ -9,18 +9,16 @@
 #include <stdexcept>
 
 #include "arch/arch.hpp"
+#include "assembler/lib/grammar.hpp"
 
 # define CASE_NONTERMINAL       \
 case Symbol::Start:             \
-case Symbol::End:               \
+case Symbol::END:               \
+case Symbol::E:                 \
 case Symbol::T:                 \
 case Symbol::I:                 \
 case Symbol::D:                 \
-case Symbol::W:                 \
-case Symbol::Zero:              \
-case Symbol::One:               \
-case Symbol::Two:               \
-case Symbol::Three
+case Symbol::W
 
 
 std::vector<std::byte> str_to_bytes(std::string str);

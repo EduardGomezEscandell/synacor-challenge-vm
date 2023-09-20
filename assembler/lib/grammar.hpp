@@ -1,25 +1,23 @@
 #pragma once
 
-#include "arch/arch.hpp"
-
 #include <string>
+#include <tuple>
 #include <vector>
+
+#include "arch/arch.hpp"
 
 // Check out $root/docs/assembly/assembly.md#grammar
 enum class Symbol : int {
   // NonTerminals
   Start = -100,
-  End,
+  E,
   T,
   I,
   D,
   W,
-  Zero,
-  One,
-  Two,
-  Three,
 
   // Terminals
+  END,
 
   // Literals
   NUMBER_LITERAL = 50,
@@ -52,4 +50,8 @@ struct Token {
 
   Symbol type;
   std::vector<std::byte> data = {};
+
+  constexpr bool operator==(Token other) const noexcept {
+    return type == other.type && data == other.data;
+  }
 };

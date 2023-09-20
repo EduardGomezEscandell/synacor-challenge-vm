@@ -47,19 +47,15 @@ Tokenization:
 ## Grammar
 
 
-| **Non-terminal** | **Explanation**              |
-| ---------------- | ---------------------------- |
-| `S`              | Start                        |
-| `$`              | End                          |
-| `E`              | Line                         |
-| `I`              | Instruction                  |
-| `T`              | Tag declaration              |
-| `W`              | Word                         |
-| `D`              | Raw data                     |
-| `3`              | `VERB` expecting 3 arguments |
-| `2`              | `VERB` expecting 2 arguments |
-| `1`              | `VERB` expecting 1 arguments |
-| `0`              | `VERB` expecting 0 arguments |
+| **Non-terminal** | **Explanation** |
+| ---------------- | --------------- |
+| `S`              | Start           |
+| `$`              | End             |
+| `E`              | Line            |
+| `I`              | Instruction     |
+| `T`              | Tag declaration |
+| `W`              | Word            |
+| `D`              | Raw data        |
 
 | **Terminal** | Matching token      | Explanation                    |
 | ------------ | ------------------- | ------------------------------ |
@@ -71,6 +67,7 @@ Tokenization:
 | `a`          | `TAG_REF`           | referencing a tag (a: address) |
 | `'jmp'`      | `VERB`              | verb with the specified name   |
 | `n`          | `EOL`               | end of line                    |
+| `v`          | `VERB`              |                                |
 
 ### Production rules
 
@@ -87,26 +84,20 @@ T → t
 I → 3WWW | 2WW | 1W | 0
 
 # Line with raw data
-D → WD | sD | ε
+D → xD | cD | aD | rD | sD | ε
 
 # Single-word literals (plus references and registers)
 W → x | c | a | r
-
-# Instruction set (according to number of arguments)
-0 → 'halt' | 'ret' | 'noop'
-1 → 'push' | 'pop' | 'jmp' | 'call' | 'out'  | 'in'
-2 → 'set'  | 'jt'  | 'jf'  | 'not'  | 'rmem' | 'wmem'
-3 → 'eq'   | 'gt'  | 'add' | 'mult' | 'mod'  | 'and'  | 'or'
 ```
 
 ## FIRST/FOLLOW table
 Let's first define a few sets for easier readability.
 ```
-v0 = { 'halt', 'ret', 'noop' }
-v1 = { 'push', 'pop', 'jmp', 'call', 'out' , 'in' }
-v2 = { 'set' , 'jt' , 'jf' , 'not' , 'rmem', 'wmem' }
-v3 = { 'eq'  , 'gt' , 'add', 'mult', 'mod',  'and', 'or' }
-ω = v3 ∪ v2 ∪ v1 ∪ v0
+0 = { 'halt', 'ret', 'noop' }
+1 = { 'push', 'pop', 'jmp', 'call', 'out' , 'in' }
+2 = { 'set' , 'jt' , 'jf' , 'not' , 'rmem', 'wmem' }
+3 = { 'eq'  , 'gt' , 'add', 'mult', 'mod',  'and', 'or' }
+ω = 3 ∪ 2 ∪ 1 ∪ 0
 ```
 Here is the resulting table:
 
@@ -118,23 +109,19 @@ Here is the resulting table:
 | I                | `ω`                         | `{n}`                |
 | D                | `{x, c, a, r, s, ε}`        | `{n}`                |
 | W                | `{x, c, a, r}`              | `{x, c, a, r, s, n}` |
-| 0                | `v0`                        | `{n}`                |
-| 1                | `v1`                        | `{x, c, a, r}`       |
-| 2                | `v2`                        | `{x, c, a, r}`       |
-| 3                | `v3`                        | `{x, c, a, r}`       |
+| 0                | `0`                         | `{n}`                |
+| 1                | `1`                         | `{x, c, a, r}`       |
+| 2                | `2`                         | `{x, c, a, r}`       |
+| 3                | `3`                         | `{x, c, a, r}`       |
 
 
 ### LL(1) table
 
-|     | `x`    | `c`    | `s`    | `r`    | `t`    | `a`    | `v0`    | `v1`    | `v2`    | `v3`     | `n`    | `$`    |
-| --- | ------ | ------ | ------ | ------ | ------ | ------ | ------- | ------- | ------- | -------- | ------ | ------ |
-| `S` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$`  | `S→E$`  | `S→E$`  | `S→E$`   | `S→E$` | `S→E$` |
-| `S` | `E→Dn` | `E→Dn` | `E→Dn` | `E→Dn` | `E→Tn` | `E→Dn` | `E→I`   | `E→I`   | `E→I`   | `E→I`    | `E→Sn` | `E→$`  |
-| `T` |        |        |        |        | `T→t`  |        |         |         |         |          |        |        |
-| `I` |        |        |        |        |        |        | `I→0`   | `I→1W`  | `I→2WW` | `I→3WWW` |        |        |
-| `D` | `D→xD` | `D→WD` | `D→sD` | `D→WD` |        | `D→WD` |         |         |         |          | `D→ε`  |        |
-| `W` | `W→x`  | `W→c`  |        | `W→r`  |        | `W→a`  |         |         |         |          |        |        |
-| `0` |        |        |        |        |        |        | `0->v0` |         |         |          |        |        |
-| `1` |        |        |        |        |        |        |         | `1->v1` |         |          |        |        |
-| `2` |        |        |        |        |        |        |         |         | `2->v2` |          |        |        |
-| `3` |        |        |        |        |        |        |         |         |         | `3->v3`  |        |        |
+|     | `x`    | `c`    | `s`    | `r`    | `t`    | `a`    | `0`    | `1`    | `2`     | `3`      | `n`    | `$`   |
+| --- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------- | -------- | ------ | ----- |
+| `S` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$`  | `S→E$`   | `S→E$` |       |
+| `E` | `E→Dn` | `E→Dn` | `E→Dn` | `E→Dn` | `E→Tn` | `E→Dn` | `E→I`  | `E→I`  | `E→I`   | `E→I`    | `E→Sn` | `E→$` |
+| `T` |        |        |        |        | `T→t`  |        |        |        |         |          |        |       |
+| `I` |        |        |        |        |        |        | `I→0`  | `I→1W` | `I→2WW` | `I→3WWW` |        |       |
+| `D` | `D→xD` | `D→cD` | `D→sD` | `D→rD` |        | `D→aD` |        |        |         |          | `D→ε`  |       |
+| `W` | `W→x`  | `W→c`  |        | `W→r`  |        | `W→a`  |        |        |         |          |        |       |

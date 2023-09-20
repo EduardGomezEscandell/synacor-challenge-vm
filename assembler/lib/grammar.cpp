@@ -8,8 +8,10 @@ std::string Token::fmt() const {
     // Non-terminals
     case Symbol::Start:
       return "<Start>";
-    case Symbol::End:
+    case Symbol::END:
       return "< $ >";
+    case Symbol::E:
+      return "<E>";
     case Symbol::T:
       return "<T>";
     case Symbol::I:
@@ -18,14 +20,6 @@ std::string Token::fmt() const {
       return "<D>";
     case Symbol::W:
       return "<W>";
-    case Symbol::Zero:
-      return "<0>";
-    case Symbol::One:
-      return "<1>";
-    case Symbol::Two:
-      return "<2>";
-    case Symbol::Three:
-      return "<3>";
     // Terminals
     case Symbol::NUMBER_LITERAL:
       return std::format("<NUMBER {}>", as_number());

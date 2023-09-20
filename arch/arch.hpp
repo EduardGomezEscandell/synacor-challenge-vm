@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <string_view>
 
@@ -58,54 +59,35 @@ constexpr Verb from_string(std::string_view s) {
   return ERROR;
 }
 
+#define JUMPTABLE_ROW(k, v) \
+  case k:               \
+    return v;
+
 constexpr std::string_view to_string(Verb v) {
   switch (v) {
-    case HALT:
-      return "halt";
-    case SET:
-      return "set";
-    case PUSH:
-      return "push";
-    case POP:
-      return "pop";
-    case EQ:
-      return "eq";
-    case GT:
-      return "gt";
-    case JMP:
-      return "jmp";
-    case JT:
-      return "jt";
-    case JF:
-      return "jf";
-    case ADD:
-      return "add";
-    case MULT:
-      return "mult";
-    case MOD:
-      return "mod";
-    case AND:
-      return "and";
-    case OR:
-      return "or";
-    case NOT:
-      return "not";
-    case RMEM:
-      return "rmem";
-    case WMEM:
-      return "wmem";
-    case CALL:
-      return "call";
-    case RET:
-      return "ret";
-    case OUT:
-      return "out";
-    case IN:
-      return "in";
-    case NOOP:
-      return "noop";
-    case ERROR:
-      return "ERROR";
+    JUMPTABLE_ROW(HALT, "halt")
+    JUMPTABLE_ROW(SET, "set")
+    JUMPTABLE_ROW(PUSH, "push")
+    JUMPTABLE_ROW(POP, "pop")
+    JUMPTABLE_ROW(EQ, "eq")
+    JUMPTABLE_ROW(GT, "gt")
+    JUMPTABLE_ROW(JMP, "jmp")
+    JUMPTABLE_ROW(JT, "jt")
+    JUMPTABLE_ROW(JF, "jf")
+    JUMPTABLE_ROW(ADD, "add")
+    JUMPTABLE_ROW(MULT, "mult")
+    JUMPTABLE_ROW(MOD, "mod")
+    JUMPTABLE_ROW(AND, "and")
+    JUMPTABLE_ROW(OR, "or")
+    JUMPTABLE_ROW(NOT, "not")
+    JUMPTABLE_ROW(RMEM, "rmem")
+    JUMPTABLE_ROW(WMEM, "wmem")
+    JUMPTABLE_ROW(CALL, "call")
+    JUMPTABLE_ROW(RET, "ret")
+    JUMPTABLE_ROW(OUT, "out")
+    JUMPTABLE_ROW(IN, "in")
+    JUMPTABLE_ROW(NOOP, "noop")
+    JUMPTABLE_ROW(ERROR, "ERROR")
   }
 
   return "ERROR";
@@ -113,54 +95,35 @@ constexpr std::string_view to_string(Verb v) {
 
 constexpr int argument_count(Verb v) {
   switch (v) {
-    case HALT:
-      return 0;
-    case SET:
-      return 2;
-    case PUSH:
-      return 1;
-    case POP:
-      return 1;
-    case EQ:
-      return 3;
-    case GT:
-      return 3;
-    case JMP:
-      return 1;
-    case JT:
-      return 2;
-    case JF:
-      return 2;
-    case ADD:
-      return 3;
-    case MULT:
-      return 3;
-    case MOD:
-      return 3;
-    case AND:
-      return 3;
-    case OR:
-      return 3;
-    case NOT:
-      return 2;
-    case RMEM:
-      return 2;
-    case WMEM:
-      return 2;
-    case CALL:
-      return 1;
-    case RET:
-      return 0;
-    case OUT:
-      return 1;
-    case IN:
-      return 1;
-    case NOOP:
-      return 0;
-    case ERROR:
-      return 0;
+    JUMPTABLE_ROW(HALT, 0)
+    JUMPTABLE_ROW(SET, 2)
+    JUMPTABLE_ROW(PUSH, 1)
+    JUMPTABLE_ROW(POP, 1)
+    JUMPTABLE_ROW(EQ, 3)
+    JUMPTABLE_ROW(GT, 3)
+    JUMPTABLE_ROW(JMP, 1)
+    JUMPTABLE_ROW(JT, 2)
+    JUMPTABLE_ROW(JF, 2)
+    JUMPTABLE_ROW(ADD, 3)
+    JUMPTABLE_ROW(MULT, 3)
+    JUMPTABLE_ROW(MOD, 3)
+    JUMPTABLE_ROW(AND, 3)
+    JUMPTABLE_ROW(OR, 3)
+    JUMPTABLE_ROW(NOT, 2)
+    JUMPTABLE_ROW(RMEM, 2)
+    JUMPTABLE_ROW(WMEM, 2)
+    JUMPTABLE_ROW(CALL, 1)
+    JUMPTABLE_ROW(RET, 0)
+    JUMPTABLE_ROW(OUT, 1)
+    JUMPTABLE_ROW(IN, 1)
+    JUMPTABLE_ROW(NOOP, 0)
+    JUMPTABLE_ROW(ERROR, 0)
   }
+  
+  assert(0);
+  return -1;
 }
 
+#undef JUMPTABLE_ROW
 
-}
+}  // namespace arch
