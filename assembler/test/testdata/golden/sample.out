@@ -4,3 +4,4 @@
 <VERB eq> <REGISTER 0> <CHARACTER z> <EOL>
 <VERB out> <REGISTER 0> <EOL>
 <VERB jt> <TAG_REF loop> <EOL>
+<END>
