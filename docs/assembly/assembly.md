@@ -67,7 +67,7 @@ Tokenization:
 | `a`          | `TAG_REF`           | referencing a tag (a: address) |
 | `'jmp'`      | `VERB`              | verb with the specified name   |
 | `n`          | `EOL`               | end of line                    |
-| `v`          | `VERB`              |                                |
+
 
 ### Production rules
 
@@ -102,13 +102,13 @@ nsn
 ```
 Which can be parsed as any of these two trees:
 ```
-            S                   S
-            |                   |
-            P                   P
-           / \               /  |  \
-          n   Dn            D   D   n
-              |             |   |
-              s             n   s
+              S                S
+              |                |
+              P                P
+            / | \            / | \
+           n  D  n          D  D  n
+              |             |  |
+              s             n  s
 ```
 We could get rid of the ambiguity by removing rule `P → nP`, however it makes more sense to consider empty lines as their own thing than to lump them in with raw-data lines.
 
@@ -122,22 +122,18 @@ Let's first define a few sets for easier readability.
 1 = { 'push', 'pop', 'jmp', 'call', 'out' , 'in' }
 2 = { 'set' , 'jt' , 'jf' , 'not' , 'rmem', 'wmem' }
 3 = { 'eq'  , 'gt' , 'add', 'mult', 'mod',  'and', 'or' }
-ω = 3 ∪ 2 ∪ 1 ∪ 0
+ω = 0 ∪ 1 ∪ 2 ∪ 3
 ```
 Here is the resulting table:
 
-| **Non-terminal** | **FIRST()**                    | **FOLLOW()**                   |
-| ---------------- | ------------------------------ | ------------------------------ |
-| S                | `{n, t, x, c, a, r, s, ε} ∪ ω` |                                |
-| P                | `{n, t, x, c, a, r, s, ε} ∪ ω` | `{$, n, t, c, a, r, s, ε} ∪ ω` |
-| T                | `{n, t}`                       | `{n}`                          |
-| I                | `ω`                            | `{n}`                          |
-| D                | `{x, c, a, r, s, ε}`           | `{n}`                          |
-| W                | `{x, c, a, r}`                 | `{x, c, a, r, s, n}`           |
-| 0                | `0`                            | `{n}`                          |
-| 1                | `1`                            | `{x, c, a, r}`                 |
-| 2                | `2`                            | `{x, c, a, r}`                 |
-| 3                | `3`                            | `{x, c, a, r}`                 |
+| **Non-terminal** | **FIRST()**                    | **FOLLOW()**                |
+| ---------------- | ------------------------------ | --------------------------- |
+| S                | `{n, t, x, c, a, r, s, ε} ∪ ω` | `{$}`                       |
+| P                | `{n, t, x, c, a, r, s, ε} ∪ ω` | `{$, n, t, c, a, r, s} ∪ ω` |
+| T                | `{t}`                          | `{n}`                       |
+| I                | `ω`                            | `{n}`                       |
+| D                | `{x, c, a, r, s, ε}`           | `{x, c, a, r, s, n}`        |
+| W                | `{x, c, a, r}`                 | `{x, c, a, r, s, n}`        |
 
 
 ### LL(1) table
