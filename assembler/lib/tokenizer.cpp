@@ -11,15 +11,13 @@
 #include "arch/arch.hpp"
 #include "assembler/lib/grammar.hpp"
 
-# define CASE_NONTERMINAL       \
-case Symbol::Start:             \
-case Symbol::END:               \
-case Symbol::E:                 \
-case Symbol::T:                 \
-case Symbol::I:                 \
-case Symbol::D:                 \
-case Symbol::W
-
+#define CASE_NONTERMINAL \
+  case Symbol::Start:    \
+  case Symbol::P:        \
+  case Symbol::T:        \
+  case Symbol::I:        \
+  case Symbol::D:        \
+  case Symbol::W
 
 std::vector<std::byte> str_to_bytes(std::string str);
 constexpr std::optional<char> escape(char ch);
@@ -28,32 +26,33 @@ std::vector<Token> tokenize(std::istream& is) {
   std::vector<Token> tokenized;
   TokenParser p;
 
-  std::size_t row = 1;
-  std::size_t col = 0;
-
-  const auto consume = [&](char ch) {
-    auto token = p.consume(ch);
-    if (token.type == Symbol::NONE) {
+  const auto consume = [&](char ch, unsigned row, unsigned col) {
+    auto token = p.consume(ch, row, col);
+    if (token.symbol == Symbol::NONE) {
       return;
     }
 
     tokenized.push_back(token);
 
-    if (token.type == Symbol::ERROR) {
-      std::cerr << std::format("Error parsing line {}, col {}: {}\n", row, col,
+    if (token.symbol == Symbol::ERROR) {
+      std::cerr << std::format("Error tokenizing line {}, col {}: {}\n", row, col,
                                token.as_str());
     }
   };
+
+  unsigned row = 1;
+  unsigned col = 0;
 
   while (is) {
     const auto ch = static_cast<char>(is.get());
     ++col;
 
     if (ch == EOF) {
+      consume('\n', row, col);
       break;
     }
 
-    consume(ch);
+    consume(ch, row, col);
 
     if (ch == '\n') {
       ++row;
@@ -61,19 +60,21 @@ std::vector<Token> tokenize(std::istream& is) {
     }
   }
 
-  consume('\n');
-  consume(0);
+  consume(EOF, row, col);
+  consume(0, row, col);
 
   return tokenized;
 }
 
-Token TokenParser::consume(char ch) {
-  const bool done = [this, ch]() -> bool {
+Token TokenParser::consume(char ch, unsigned row, unsigned col) {
+  const bool done = [this, ch, row, col]() -> bool {
     switch (type) {
       case Symbol::NONE:
         len = 0;
-        first_byte(ch);
+        first_byte(ch, row, col);
         return false;
+      case Symbol::END:
+        return true;
       case Symbol::EOL:
         return consume_EOL(ch);
       case Symbol::UNKNOWN_IDENTIFIER:
@@ -101,7 +102,7 @@ Token TokenParser::consume(char ch) {
   Token r{};
   if (done) {
     r = finalize();
-    first_byte(ch);
+    first_byte(ch, row, col);
   }
 
   ++len;
@@ -109,7 +110,15 @@ Token TokenParser::consume(char ch) {
   return r;
 }
 
-void TokenParser::first_byte(char ch) {
+void TokenParser::first_byte(char ch, unsigned row, unsigned col) {
+  this->start_row = row;
+  this->start_col = col;
+  
+  if (ch == EOF) {
+    type = Symbol::END;
+    return;
+  }
+
   if (ch == '\n') {
     type = Symbol::EOL;
     return;
@@ -175,7 +184,7 @@ bool TokenParser::consume_IDENTIFIER(char ch) {
   }
 
   return error(ch,
-               std::format("Unexpected character in identifier: ascii {}", ch));
+               std::format("Unexpected character in identifier: ascii {}", static_cast<int>(ch)));
 }
 
 bool TokenParser::consume_NUMBER(char ch) {
@@ -358,66 +367,69 @@ Token TokenParser::finalize() {
       case Symbol::UNKNOWN_IDENTIFIER:
         return finalize_IDENTIFIER();
       case Symbol::ERROR:
-        return {.type = Symbol::ERROR, .data = str_to_bytes(identifier)};
+        return {Symbol::ERROR, str_to_bytes(identifier)};
       case Symbol::EOL:
-        return {.type = Symbol::EOL};
+        return {Symbol::EOL};
+      case Symbol::END:
+        return {Symbol::END};
       case Symbol::NONE:
-        return {.type = Symbol::NONE};
+        return {Symbol::NONE};
       case Symbol::REGISTER:
       case Symbol::TAG_DECL:
       case Symbol::TAG_REF:
       case Symbol::VERB:
       CASE_NONTERMINAL:
         assert(false);  // Unreachable code
-        return {.type = Symbol::ERROR};
+        return {Symbol::ERROR};
     }
 
     assert(false);  // Unreachable code
-    return {.type = Symbol::ERROR};
+    return {Symbol::ERROR};
   }();
 
+  r.set_location(start_row, start_col);
   *this = TokenParser{};
   return r;
 }
 
 Token TokenParser::finalize_NUMBER() {
   assert(value <= 0xffff);
-  return {.type = Symbol::NUMBER_LITERAL,
-          .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+  return {Symbol::NUMBER_LITERAL,
+          {std::byte(value & 0xff), std::byte(value & 0xff00)}};
 }
 
 Token TokenParser::finalize_CHARACTER() {
-  return {.type = Symbol::CHARACTER_LITERAL,
-          .data = {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+  return {Symbol::CHARACTER_LITERAL,
+          {std::byte(value & 0xff), std::byte(value & 0xff00)}};
 }
 
 Token TokenParser::finalize_STRING() {
   return {
-      .type = Symbol::STRING_LITERAL,
-      .data = str_to_bytes(identifier),
+      Symbol::STRING_LITERAL,
+      str_to_bytes(identifier),
   };
 }
 
 Token TokenParser::finalize_IDENTIFIER() {
   if (const auto id = arch::from_string(identifier); id != Verb::ERROR) {
     return {
-        .type = Symbol::VERB,
-        .data = {std::byte(id & 0xff), std::byte{}},
+        Symbol::VERB,
+        {std::byte(id & 0xff), std::byte{}},
     };
   }
 
   if (identifier.starts_with('r') && identifier.size() == 2 &&
       std::isdigit(identifier[1])) {
-    return {.type = Symbol::REGISTER,
-            .data = {std::byte(identifier[1] - '0'), std::byte(0x80)}};
+    return {Symbol::REGISTER,
+            {std::byte(identifier[1] - '0'), std::byte(0x80)}};
   }
 
   if (identifier.ends_with(":")) {
     identifier.pop_back();
-    return {.type = Symbol::TAG_DECL, .data = str_to_bytes(identifier)};
+    return {Symbol::TAG_DECL, str_to_bytes(identifier)};
   }
 
-  return {.type = Symbol::TAG_REF, .data = str_to_bytes(identifier)};
+  return {Symbol::TAG_REF, str_to_bytes(identifier)};
 }
 
 std::vector<std::byte> str_to_bytes(std::string str) {
@@ -469,7 +481,8 @@ std::ostream& fmt_tokens(std::ostream& out,
     }
     firstchar = false;
     out << token.fmt();
-    if (token.type == Symbol::EOL || token.type == Symbol::ERROR) {
+    if (token.symbol == Symbol::EOL || token.symbol == Symbol::ERROR ||
+        token.symbol == Symbol::EOL) {
       out << '\n';
       firstchar = true;
     }

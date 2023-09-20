@@ -4,14 +4,14 @@
 #include <format>
 
 std::string Token::fmt() const {
-  switch (type) {
+  switch (symbol) {
     // Non-terminals
     case Symbol::Start:
       return "<Start>";
     case Symbol::END:
-      return "< $ >";
-    case Symbol::E:
-      return "<E>";
+      return "<END>";
+    case Symbol::P:
+      return "<L>";
     case Symbol::T:
       return "<T>";
     case Symbol::I:
@@ -75,7 +75,7 @@ unsigned Token::as_number() const {
 }
 
 Verb Token::as_opcode() const {
-  assert(type == Symbol::VERB);
+  assert(symbol == Symbol::VERB);
   const auto n = as_number();
   return static_cast<Verb>(n);
 }

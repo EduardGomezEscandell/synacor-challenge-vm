@@ -1,6 +1,7 @@
 add_library(libassembler
     grammar.hpp grammar.cpp    
     tokenizer.hpp tokenizer.cpp
+    parser.hpp parser.cpp
 )
 
 set_target_properties(libassembler PROPERTIES LINKER_LANGUAGE CXX)

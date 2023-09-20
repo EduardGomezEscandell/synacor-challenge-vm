@@ -51,7 +51,7 @@ Tokenization:
 | ---------------- | --------------- |
 | `S`              | Start           |
 | `$`              | End             |
-| `E`              | Line            |
+| `P`              | Program         |
 | `I`              | Instruction     |
 | `T`              | Tag declaration |
 | `W`              | Word            |
@@ -72,10 +72,11 @@ Tokenization:
 ### Production rules
 
 ```
-S → E$
+S → P$
 
-# Three types of line
-E → Tn | In | Dn
+# Every line may be trailed by another line
+# Four types of line (empty, declaration, instruction, data)
+P → nP | TnP | InP | DnP | ε
 
 # Line with a tag declaration
 T → t
@@ -101,27 +102,27 @@ Let's first define a few sets for easier readability.
 ```
 Here is the resulting table:
 
-| **Non-terminal** | **FIRST()**                 | **FOLLOW()**         |
-| ---------------- | --------------------------- | -------------------- |
-| S                | `{n, t, c, a, r, s, ε} ∪ ω` |                      |
-| E                | `{n, t, c, a, r, s, ε} ∪ ω` | `{$}`                |
-| T                | `{n, t}`                    | `{n}`                |
-| I                | `ω`                         | `{n}`                |
-| D                | `{x, c, a, r, s, ε}`        | `{n}`                |
-| W                | `{x, c, a, r}`              | `{x, c, a, r, s, n}` |
-| 0                | `0`                         | `{n}`                |
-| 1                | `1`                         | `{x, c, a, r}`       |
-| 2                | `2`                         | `{x, c, a, r}`       |
-| 3                | `3`                         | `{x, c, a, r}`       |
+| **Non-terminal** | **FIRST()**                    | **FOLLOW()**                   |
+| ---------------- | ------------------------------ | ------------------------------ |
+| S                | `{n, t, x, c, a, r, s, ε} ∪ ω` |                                |
+| P                | `{n, t, x, c, a, r, s, ε} ∪ ω` | `{$, n, t, c, a, r, s, ε} ∪ ω` |
+| T                | `{n, t}`                       | `{n}`                          |
+| I                | `ω`                            | `{n}`                          |
+| D                | `{x, c, a, r, s, ε}`           | `{n}`                          |
+| W                | `{x, c, a, r}`                 | `{x, c, a, r, s, n}`           |
+| 0                | `0`                            | `{n}`                          |
+| 1                | `1`                            | `{x, c, a, r}`                 |
+| 2                | `2`                            | `{x, c, a, r}`                 |
+| 3                | `3`                            | `{x, c, a, r}`                 |
 
 
 ### LL(1) table
 
-|     | `x`    | `c`    | `s`    | `r`    | `t`    | `a`    | `0`    | `1`    | `2`     | `3`      | `n`    | `$`   |
-| --- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------- | -------- | ------ | ----- |
-| `S` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$` | `S→E$`  | `S→E$`   | `S→E$` |       |
-| `E` | `E→Dn` | `E→Dn` | `E→Dn` | `E→Dn` | `E→Tn` | `E→Dn` | `E→I`  | `E→I`  | `E→I`   | `E→I`    | `E→Sn` | `E→$` |
-| `T` |        |        |        |        | `T→t`  |        |        |        |         |          |        |       |
-| `I` |        |        |        |        |        |        | `I→0`  | `I→1W` | `I→2WW` | `I→3WWW` |        |       |
-| `D` | `D→xD` | `D→cD` | `D→sD` | `D→rD` |        | `D→aD` |        |        |         |          | `D→ε`  |       |
-| `W` | `W→x`  | `W→c`  |        | `W→r`  |        | `W→a`  |        |        |         |          |        |       |
+|     | `x`     | `c`     | `s`     | `r`     | `t`     | `a`     | `0`     | `1`     | `2`     | `3`      | `n`    | `$`   |
+| --- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | -------- | ------ | ----- |
+| `S` | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`   | `S→P$` |       |
+| `P` | `P→DnP` | `P→DnP` | `P→DnP` | `P→DnP` | `P→TnP` | `P→DnP` | `P→InP` | `P→InP` | `P→InP` | `P→InP`  | `P→nP` | `P→$` |
+| `T` |         |         |         |         | `T→t`   |         |         |         |         |          |        |       |
+| `I` |         |         |         |         |         |         | `I→0`   | `I→1W`  | `I→2WW` | `I→3WWW` |        |       |
+| `D` | `D→xD`  | `D→cD`  | `D→sD`  | `D→rD`  |         | `D→aD`  |         |         |         |          | `D→ε`  |       |
+| `W` | `W→x`   | `W→c`   |         | `W→r`   |         | `W→a`   |         |         |         |          |        |       |

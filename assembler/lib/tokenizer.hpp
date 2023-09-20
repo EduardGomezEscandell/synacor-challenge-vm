@@ -10,6 +10,9 @@
 namespace {
 
 struct TokenParser {
+  unsigned start_row;
+  unsigned start_col;
+  
   int len = 0;
   Symbol type = Symbol::NONE;
 
@@ -21,7 +24,7 @@ struct TokenParser {
   char prev_char;
   std::string identifier = {};
 
-  Token consume(char ch);
+  Token consume(char ch, unsigned row, unsigned col);
 
  private:
   bool error(char ch, std::string&& msg) {
@@ -31,7 +34,7 @@ struct TokenParser {
     return false;
   }
 
-  void first_byte(char ch);
+  void first_byte(char ch, unsigned row, unsigned col);
 
   bool consume_EOL(char ch);
   bool consume_IDENTIFIER(char ch);

@@ -8,30 +8,31 @@
 
 // Check out $root/docs/assembly/assembly.md#grammar
 enum class Symbol : int {
-  // NonTerminals
+  // Non-Terminals
   Start = -100,
-  E,
+  P,
   T,
   I,
   D,
   W,
 
   // Terminals
-  END,
 
-  // Literals
+  // delimiters
+  END,
+  EOL,
+
+  // literals
   NUMBER_LITERAL = 50,
   CHARACTER_LITERAL,
   STRING_LITERAL,
 
-  // Identifiers
+  // identifiers
   REGISTER,
   TAG_DECL,
   TAG_REF,
   VERB,
 
-  // End of line
-  EOL,
 
   // Temporary symbols used in parsing
   NONE = 0,
@@ -39,7 +40,23 @@ enum class Symbol : int {
   ERROR,               // Erroneous input
 };
 
-struct Token {
+struct Token { 
+  constexpr Token(Symbol symbol = Symbol::NONE, std::vector<std::byte> data = {}) :
+    symbol{symbol}, data{data}
+  {}
+
+  void set_location(unsigned row, unsigned col) noexcept{
+    this->m_row = row;
+    this->m_col = col;
+  }
+
+  unsigned row() const noexcept { return m_row;}
+  unsigned col() const noexcept { return m_col;}
+
+constexpr bool operator==(Token other) const noexcept {
+    return symbol == other.symbol && data == other.data;
+  }
+
   std::string as_str() const;
   std::string fmt() const;
 
@@ -48,10 +65,10 @@ struct Token {
   char as_char() const;
   wchar_t as_wchar() const;
 
-  Symbol type;
+  Symbol symbol;
   std::vector<std::byte> data = {};
 
-  constexpr bool operator==(Token other) const noexcept {
-    return type == other.type && data == other.data;
-  }
+  private:
+    unsigned m_row;
+    unsigned m_col;
 };

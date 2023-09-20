@@ -60,7 +60,7 @@ constexpr Verb from_string(std::string_view s) {
 }
 
 #define JUMPTABLE_ROW(k, v) \
-  case k:               \
+  case k:                   \
     return v;
 
 constexpr std::string_view to_string(Verb v) {
@@ -117,9 +117,10 @@ constexpr int argument_count(Verb v) {
     JUMPTABLE_ROW(OUT, 1)
     JUMPTABLE_ROW(IN, 1)
     JUMPTABLE_ROW(NOOP, 0)
-    JUMPTABLE_ROW(ERROR, 0)
+    case ERROR:
+      break;
   }
-  
+
   assert(0);
   return -1;
 }

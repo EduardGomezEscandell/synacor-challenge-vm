@@ -1,6 +1,6 @@
-push r0 'a'
+set r0 'a'
 loop:
     add r0 r0 1
-    eq r0 'z'
+    eq r1 r0 'z'
     out r0
-    jt loop
+    jt r1 loop
