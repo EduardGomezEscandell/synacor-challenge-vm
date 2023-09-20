@@ -90,6 +90,30 @@ D → xD | cD | aD | rD | sD | ε
 # Single-word literals (plus references and registers)
 W → x | c | a | r
 ```
+### A caviat
+Note that this grammar is not truly LL(1): there is ambiguity in the presence of an emtpy line. The following program:
+```
+
+"this string literal sits under an empty line"
+```
+Note that the tokenizer always appends a newline at the end of non-empty files. Hence, the previous text is tokenized into the following string:
+```
+nsn
+```
+Which can be parsed as any of these two trees:
+```
+            S                   S
+            |                   |
+            P                   P
+           / \               /  |  \
+          n   Dn            D   D   n
+              |             |   |
+              s             n   s
+```
+We could get rid of the ambiguity by removing rule `P → nP`, however it makes more sense to consider empty lines as their own thing than to lump them in with raw-data lines.
+
+Hence, we default to the left tree.
+
 
 ## FIRST/FOLLOW table
 Let's first define a few sets for easier readability.
