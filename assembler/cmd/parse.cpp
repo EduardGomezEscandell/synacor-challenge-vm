@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
 
-  auto tokenized = tokenize({argv[1]});
+  auto [tokenized, success] = tokenize({argv[1]});
   parse(tokenized.begin(), tokenized.end());
 
   return EXIT_SUCCESS;

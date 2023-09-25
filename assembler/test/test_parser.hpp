@@ -12,12 +12,14 @@
 inline void test_parser(std::string_view test_name, bool want_success) {
   auto lock = SET_TEST_DIR();
 
-  auto tokenized = tokenize(fixture_path(test_name));
+  auto [tokenized, ok] = tokenize(fixture_path(test_name));
+  REQUIRE_MESSAGE(ok, "Setup: unsuccesful tokenization");
+    
   auto [root, success] = parse(tokenized.begin(), tokenized.end());
-  if (!want_success) {
-    REQUIRE_FALSE(success);
-  } else {
+  if (want_success) {
     REQUIRE(success);
+  } else {
+    REQUIRE_FALSE(success);
   }
 
   std::stringstream ss;
@@ -31,7 +33,7 @@ TEST_CASE("parser") {
   SUBCASE("endline") { test_parser("parser/endline", true); }
   SUBCASE("tag") { test_parser("parser/tag", true); }
   SUBCASE("instruction") { test_parser("parser/instruction", true); }
-  SUBCASE("numbers") { test_parser("parser/numbers", false); }
+  SUBCASE("numbers") { test_parser("parser/numbers", true); }
   SUBCASE("sample") { test_parser("parser/sample", false); }
   SUBCASE("sample2") { test_parser("parser/sample2", true); }
 }

@@ -59,6 +59,6 @@ struct TokenParser {
 
 }  // namespace
 
-std::vector<Token> tokenize(std::string file_name);
+std::pair<std::vector<Token>, bool> tokenize(std::string file_name);
 
 std::ostream& fmt_tokens(std::ostream& out, std::vector<Token> const& tokenized);

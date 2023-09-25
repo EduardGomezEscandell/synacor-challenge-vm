@@ -23,16 +23,16 @@
 std::vector<std::byte> str_to_bytes(std::string str);
 constexpr std::optional<char> escape(char ch);
 
-std::vector<Token> tokenize(std::string file_name) {
+std::pair<std::vector<Token>, bool> tokenize(std::string file_name) {
   std::ifstream f(file_name.c_str(), std::ios_base::binary);
 
   std::vector<Token> tokenized;
   TokenParser p{.file_name = std::move(file_name)};
 
-  const auto consume = [&](char ch) {
+  const auto consume = [&](char ch) -> bool {
     auto token = p.consume(ch);
     if (token.symbol == Symbol::NONE) {
-      return;
+      return true;
     }
 
     tokenized.push_back(token);
@@ -40,24 +40,28 @@ std::vector<Token> tokenize(std::string file_name) {
     if (token.symbol == Symbol::ERROR) {
       std::cerr << std::format("{}: tokenization error: {}\n", token.location(),
                                token.as_str());
+      return false;
     }
+
+    return true;
   };
 
+  unsigned errcount = 0;
   while (f) {
     const auto ch = static_cast<char>(f.get());
 
     if (ch == EOF) {
-      consume('\n');
+      errcount += consume('\n') ? 0 : 1;
       break;
     }
 
-    consume(ch);
+    errcount += consume(ch) ? 0 : 1;
   }
 
-  consume(EOF);
-  consume(0);
+  errcount += consume(EOF) ? 0 : 1;
+  errcount += consume(0) ? 0 : 1;
 
-  return tokenized;
+  return {std::move(tokenized), errcount == 0};
 }
 
 Token TokenParser::consume(char ch) {

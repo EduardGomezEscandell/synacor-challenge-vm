@@ -8,10 +8,16 @@
 #include "lib/tokenizer.hpp"
 #include "test/utils.hpp"
 
-inline void test_tokenizer(std::string_view test_name) {
+inline void test_tokenizer(std::string_view test_name, bool want_success) {
   auto lock = SET_TEST_DIR();
 
-  const auto got = tokenize(fixture_path(test_name));
+  const auto [got, ok] = tokenize(fixture_path(test_name));
+  if(want_success) {
+    REQUIRE(ok);
+  } else {
+    REQUIRE_FALSE(ok);
+  }
+
   std::stringstream ss;
   fmt_tokens(ss, got);
 
@@ -19,11 +25,11 @@ inline void test_tokenizer(std::string_view test_name) {
 }
 
 TEST_CASE("tokenizer") {
-  SUBCASE("empty") { test_tokenizer("tokenizer/empty"); }
-  SUBCASE("endline") { test_tokenizer("tokenizer/endline"); }
-  SUBCASE("tag") { test_tokenizer("tokenizer/tag"); }
-  SUBCASE("instruction") { test_tokenizer("tokenizer/instruction"); }
-  SUBCASE("numbers") { test_tokenizer("tokenizer/numbers"); }
-  SUBCASE("sample") { test_tokenizer("tokenizer/sample"); }
-  SUBCASE("sample2") { test_tokenizer("tokenizer/sample2"); }
+  SUBCASE("empty") { test_tokenizer("tokenizer/empty", true); }
+  SUBCASE("endline") { test_tokenizer("tokenizer/endline", true); }
+  SUBCASE("tag") { test_tokenizer("tokenizer/tag", true); }
+  SUBCASE("instruction") { test_tokenizer("tokenizer/instruction", true); }
+  SUBCASE("numbers") { test_tokenizer("tokenizer/numbers", false); }
+  SUBCASE("sample") { test_tokenizer("tokenizer/sample", true); }
+  SUBCASE("sample2") { test_tokenizer("tokenizer/sample2", true); }
 }

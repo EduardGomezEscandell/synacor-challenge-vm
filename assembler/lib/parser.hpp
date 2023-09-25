@@ -49,6 +49,7 @@ void apply_production_rule(std::stack<Node*>& stack, Iterable replace) {
                 [&stack](std::unique_ptr<Node>& n) { stack.push(n.get()); });
 }
 
+// parse returns the root of the Abstract Syntax Tree, and a success flag.
 std::pair<Node, bool> parse(TokenForwardIterator auto begin,
                             TokenForwardIterator auto end) {
   Node root{.token = Symbol::Start};
