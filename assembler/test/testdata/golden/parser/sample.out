@@ -1,7 +1,9 @@
-<VERB push> <REGISTER 0> <CHARACTER a> <EOL>
-<TAG_DECL loop> <EOL>
-<VERB add> <REGISTER 0> <REGISTER 0> <NUMBER 1> <EOL>
-<VERB eq> <REGISTER 0> <CHARACTER z> <EOL>
-<VERB out> <REGISTER 0> <EOL>
-<VERB jt> <TAG_REF loop> <EOL>
-<END>
+<Start>
+  <P>
+    <I>
+      <VERB push>
+      <W>
+        <REGISTER 0>
+    <EOL>
+    <P>
+  <END>
