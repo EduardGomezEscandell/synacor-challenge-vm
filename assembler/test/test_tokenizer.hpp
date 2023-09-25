@@ -7,8 +7,7 @@
 #include "lib/tokenizer.hpp"
 #include "test/utils.hpp"
 
-namespace {
-inline void test(std::string_view test_name) {
+inline void test_tokenizer(std::string_view test_name) {
   auto lock = SET_TEST_DIR();
 
   std::ifstream input = load_fixture(test_name);
@@ -19,12 +18,13 @@ inline void test(std::string_view test_name) {
 
   check_golden(test_name, ss.str());
 }
-}  // namespace
 
-TEST_CASE("empty") { test("empty"); }
-TEST_CASE("endline") { test("endline"); }
-TEST_CASE("tag") { test("tag"); }
-TEST_CASE("instruction") { test("instruction"); }
-TEST_CASE("numbers") { test("numbers"); }
-TEST_CASE("sample") { test("sample"); }
-TEST_CASE("sample2") { test("sample2"); }
+TEST_CASE("tokenizer") {
+  SUBCASE("empty") { test_tokenizer("tokenizer/empty"); }
+  SUBCASE("endline") { test_tokenizer("tokenizer/endline"); }
+  SUBCASE("tag") { test_tokenizer("tokenizer/tag"); }
+  SUBCASE("instruction") { test_tokenizer("tokenizer/instruction"); }
+  SUBCASE("numbers") { test_tokenizer("tokenizer/numbers"); }
+  SUBCASE("sample") { test_tokenizer("tokenizer/sample"); }
+  SUBCASE("sample2") { test_tokenizer("tokenizer/sample2"); }
+}
