@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cctype>
 #include <format>
+#include <fstream>
 #include <ios>
 #include <iostream>
 #include <optional>
@@ -22,12 +23,14 @@
 std::vector<std::byte> str_to_bytes(std::string str);
 constexpr std::optional<char> escape(char ch);
 
-std::vector<Token> tokenize(std::istream& is) {
-  std::vector<Token> tokenized;
-  TokenParser p;
+std::vector<Token> tokenize(std::string file_name) {
+  std::ifstream f(file_name.c_str(), std::ios_base::binary);
 
-  const auto consume = [&](char ch, unsigned row, unsigned col) {
-    auto token = p.consume(ch, row, col);
+  std::vector<Token> tokenized;
+  TokenParser p{.file_name = std::move(file_name)};
+
+  const auto consume = [&](char ch) {
+    auto token = p.consume(ch);
     if (token.symbol == Symbol::NONE) {
       return;
     }
@@ -35,43 +38,34 @@ std::vector<Token> tokenize(std::istream& is) {
     tokenized.push_back(token);
 
     if (token.symbol == Symbol::ERROR) {
-      std::cerr << std::format("Error tokenizing line {}, col {}: {}\n", row, col,
+      std::cerr << std::format("{}: tokenization error: {}\n", token.location(),
                                token.as_str());
     }
   };
 
-  unsigned row = 1;
-  unsigned col = 0;
-
-  while (is) {
-    const auto ch = static_cast<char>(is.get());
-    ++col;
+  while (f) {
+    const auto ch = static_cast<char>(f.get());
 
     if (ch == EOF) {
-      consume('\n', row, col);
+      consume('\n');
       break;
     }
 
-    consume(ch, row, col);
-
-    if (ch == '\n') {
-      ++row;
-      col = 0;
-    }
+    consume(ch);
   }
 
-  consume(EOF, row, col);
-  consume(0, row, col);
+  consume(EOF);
+  consume(0);
 
   return tokenized;
 }
 
-Token TokenParser::consume(char ch, unsigned row, unsigned col) {
-  const bool done = [this, ch, row, col]() -> bool {
+Token TokenParser::consume(char ch) {
+  const bool done = [this, ch]() -> bool {
     switch (type) {
       case Symbol::NONE:
         len = 0;
-        first_byte(ch, row, col);
+        first_byte(ch);
         return false;
       case Symbol::END:
         return true;
@@ -102,18 +96,22 @@ Token TokenParser::consume(char ch, unsigned row, unsigned col) {
   Token r{};
   if (done) {
     r = finalize();
-    first_byte(ch, row, col);
+    clear();
+    first_byte(ch);
   }
 
   ++len;
+  if (ch == '\n') {
+    ++row;
+    col = 1;
+  } else {
+    ++col;
+  }
 
   return r;
 }
 
-void TokenParser::first_byte(char ch, unsigned row, unsigned col) {
-  this->start_row = row;
-  this->start_col = col;
-  
+void TokenParser::first_byte(char ch) {
   if (ch == EOF) {
     type = Symbol::END;
     return;
@@ -125,6 +123,7 @@ void TokenParser::first_byte(char ch, unsigned row, unsigned col) {
   }
 
   if (ch == ' ') {
+    ++start_col;
     return;
   }
 
@@ -183,8 +182,8 @@ bool TokenParser::consume_IDENTIFIER(char ch) {
       return false;
   }
 
-  return error(ch,
-               std::format("Unexpected character in identifier: ascii {}", static_cast<int>(ch)));
+  return error(ch, std::format("Unexpected character in identifier: ascii {}",
+                               static_cast<int>(ch)));
 }
 
 bool TokenParser::consume_NUMBER(char ch) {
@@ -387,9 +386,19 @@ Token TokenParser::finalize() {
     return {Symbol::ERROR};
   }();
 
-  r.set_location(start_row, start_col);
-  *this = TokenParser{};
+  r.set_location(file_name, start_row, start_col);
   return r;
+}
+
+void TokenParser::clear() {
+  start_row = row;
+  start_col = col;
+  len = 0;
+  type = Symbol::NONE;
+  num_base = 0;
+  value = 0;
+  prev_char = {};
+  identifier = {};
 }
 
 Token TokenParser::finalize_NUMBER() {

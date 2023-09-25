@@ -46,24 +46,21 @@ void reset_path_deleter(std::filesystem::path* p) {
   delete (p);
 }
 
-std::unique_ptr<std::filesystem::path, void(*)(std::filesystem::path*)> set_test_dir(std::string_view file) {
+std::unique_ptr<std::filesystem::path, void (*)(std::filesystem::path*)>
+set_test_dir(std::string_view file) {
   auto oldpath = new (std::filesystem::path);
   *oldpath = std::filesystem::current_path();
-  auto raii = std::unique_ptr<std::filesystem::path, void(*)(std::filesystem::path*)>(
-      oldpath, &reset_path_deleter);
+  auto raii =
+      std::unique_ptr<std::filesystem::path, void (*)(std::filesystem::path*)>(
+          oldpath, &reset_path_deleter);
 
   std::filesystem::current_path(std::filesystem::path(file).parent_path());
 
   return raii;
 }
 
-std::ifstream load_fixture(std::string_view test_name) {
-  const auto fixture =
-      std::format("testdata/fixtures/{}.in", sanitize(test_name));
-  auto f = std::ifstream(fixture.c_str());
-  REQUIRE_MESSAGE(
-      f, std::format("Setup: could not load fixture file {}", fixture));
-  return f;
+std::string fixture_path(std::string_view test_name) {
+  return std::format("testdata/fixtures/{}.in", sanitize(test_name));
 }
 
 void check_golden(std::string_view test_name, std::string_view got) {

@@ -45,13 +45,12 @@ struct Token {
     symbol{symbol}, data{data}
   {}
 
-  void set_location(unsigned row, unsigned col) noexcept{
+  void set_location(std::string_view file, unsigned row, unsigned col) noexcept{
+    this->m_file = file;
     this->m_row = row;
     this->m_col = col;
   }
 
-  unsigned row() const noexcept { return m_row;}
-  unsigned col() const noexcept { return m_col;}
 
 constexpr bool operator==(Token other) const noexcept {
     return symbol == other.symbol && data == other.data;
@@ -59,6 +58,7 @@ constexpr bool operator==(Token other) const noexcept {
 
   std::string as_str() const;
   std::string fmt() const;
+  std::string location() const;
 
   Verb as_opcode() const;
   unsigned as_number() const;
@@ -69,6 +69,7 @@ constexpr bool operator==(Token other) const noexcept {
   std::vector<std::byte> data = {};
 
   private:
+    std::string m_file;
     unsigned m_row;
     unsigned m_col;
 };

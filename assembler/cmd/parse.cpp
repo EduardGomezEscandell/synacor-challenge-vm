@@ -14,10 +14,7 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
 
-  auto f = std::ifstream(argv[1], std::ios_base::binary);
-  auto tokenized = tokenize(f);
-  f.close();
-
+  auto tokenized = tokenize({argv[1]});
   parse(tokenized.begin(), tokenized.end());
 
   return EXIT_SUCCESS;

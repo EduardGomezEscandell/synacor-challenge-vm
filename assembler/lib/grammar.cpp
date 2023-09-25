@@ -2,6 +2,11 @@
 
 #include <cassert>
 #include <format>
+#include <string>
+
+std::string Token::location() const {
+    return std::format("{}:{}:{}", m_file, m_row, m_col);
+}
 
 std::string Token::fmt() const {
   switch (symbol) {

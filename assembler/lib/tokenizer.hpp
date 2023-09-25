@@ -10,8 +10,12 @@
 namespace {
 
 struct TokenParser {
-  unsigned start_row;
-  unsigned start_col;
+  std::string_view file_name;
+  unsigned row = 1;
+  unsigned col = 1;
+  
+  unsigned start_row = 1;
+  unsigned start_col = 1;
   
   int len = 0;
   Symbol type = Symbol::NONE;
@@ -21,10 +25,10 @@ struct TokenParser {
   unsigned value = 0;
 
   // Text helpers
-  char prev_char;
+  char prev_char = {};
   std::string identifier = {};
 
-  Token consume(char ch, unsigned row, unsigned col);
+  Token consume(char ch);
 
  private:
   bool error(char ch, std::string&& msg) {
@@ -34,7 +38,7 @@ struct TokenParser {
     return false;
   }
 
-  void first_byte(char ch, unsigned row, unsigned col);
+  void first_byte(char ch);
 
   bool consume_EOL(char ch);
   bool consume_IDENTIFIER(char ch);
@@ -49,10 +53,12 @@ struct TokenParser {
   Token finalize_CHARACTER();
   Token finalize_STRING();
   Token finalize_IDENTIFIER();
+
+  void clear();
 };
 
 }  // namespace
 
-std::vector<Token> tokenize(std::istream& is);
+std::vector<Token> tokenize(std::string file_name);
 
 std::ostream& fmt_tokens(std::ostream& out, std::vector<Token> const& tokenized);

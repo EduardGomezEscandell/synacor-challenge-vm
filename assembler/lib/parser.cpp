@@ -61,6 +61,9 @@ bool production_rule(std::stack<Node*>& stack, Token const& input) {
     case Symbol::W:
       return rule_W(stack, input);
     CASE_TERMINAL:
+      std::cerr << std::format("{}: parsing error: unexpected token {}\n",
+                               input.location(), input.fmt());
+      return false;
     CASE_ERRONEOUS:
       break;
   }

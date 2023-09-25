@@ -78,11 +78,9 @@ std::pair<Node, bool> parse(TokenForwardIterator auto begin,
   if (!ok) {
     const Token t = *it;
     std::cerr << std::format(
-        "Parsing error in line {}, column {}: Unexpected token {}\n", t.row(),
-        t.col(), t.fmt());
+        "{}: parsing error: unexpected token {}\n", t.location(), t.fmt());
     return {std::move(root), false};
   }
 
-  std::cout << "Success" << std::endl;
   return {std::move(root), true};
 }

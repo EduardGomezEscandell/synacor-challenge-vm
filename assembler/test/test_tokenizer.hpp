@@ -11,9 +11,7 @@
 inline void test_tokenizer(std::string_view test_name) {
   auto lock = SET_TEST_DIR();
 
-  std::ifstream input = load_fixture(test_name);
-
-  const auto got = tokenize(input);
+  const auto got = tokenize(fixture_path(test_name));
   std::stringstream ss;
   fmt_tokens(ss, got);
 
