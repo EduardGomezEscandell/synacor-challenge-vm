@@ -1,0 +1,75 @@
+<Start>
+  <P>
+    <I>
+      <VERB set>
+      <W>
+        <REGISTER 0>
+      <W>
+        <TAG_REF text>
+    <EOL>
+    <P>
+      <T>
+        <TAG_DECL loop>
+      <EOL>
+      <P>
+        <I>
+          <VERB rmem>
+          <W>
+            <REGISTER 8>
+          <W>
+            <REGISTER 0>
+        <EOL>
+        <P>
+          <I>
+            <VERB out>
+            <W>
+              <REGISTER 8>
+          <EOL>
+          <P>
+            <I>
+              <VERB add>
+              <W>
+                <REGISTER 0>
+              <W>
+                <REGISTER 0>
+              <W>
+                <NUMBER 1>
+            <EOL>
+            <P>
+              <I>
+                <VERB eq>
+                <W>
+                  <REGISTER 1>
+                <W>
+                  <REGISTER 0>
+                <W>
+                  <TAG_REF endtext>
+              <EOL>
+              <P>
+                <I>
+                  <VERB jt>
+                  <W>
+                    <REGISTER 1>
+                  <W>
+                    <TAG_REF loop>
+                <EOL>
+                <P>
+                  <I>
+                    <VERB halt>
+                  <EOL>
+                  <P>
+                    <T>
+                      <TAG_DECL text>
+                    <EOL>
+                    <P>
+                      <D>
+                        <STRING Hello, world!>
+                        <D>
+                      <EOL>
+                      <P>
+                        <T>
+                          <TAG_DECL endtext>
+                        <EOL>
+                        <P>
+                          <END>
+  <END>
