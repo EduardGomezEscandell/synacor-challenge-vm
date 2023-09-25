@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include <sstream>
+#include <fstream>
 
 #include "lib/tokenizer.hpp"
 #include "test/utils.hpp"

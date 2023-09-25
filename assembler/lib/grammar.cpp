@@ -11,7 +11,7 @@ std::string Token::fmt() const {
     case Symbol::END:
       return "<END>";
     case Symbol::P:
-      return "<L>";
+      return "<P>";
     case Symbol::T:
       return "<T>";
     case Symbol::I:
@@ -38,7 +38,7 @@ std::string Token::fmt() const {
     case Symbol::VERB:
       return std::format("<VERB {}>",
                          arch::to_string(static_cast<Verb>(as_number())));
-      // Special tokens
+    // Special tokens
     case Symbol::NONE:
       return "{NONE}";
     case Symbol::UNKNOWN_IDENTIFIER:

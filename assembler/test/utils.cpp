@@ -84,7 +84,7 @@ void check_golden(std::string_view test_name, std::string_view got) {
     return;
   }
 
-  const auto env = std::getenv("GOLDEN_OVERWRITE");
+  char const* const env = std::getenv("GOLDEN_OVERWRITE");
   if (env != nullptr) {
     const auto s = trim(env);
     if (s != "") {

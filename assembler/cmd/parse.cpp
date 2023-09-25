@@ -1,12 +1,12 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <vector>
 
 #include "lib/parser.hpp"
 #include "lib/tokenizer.hpp"
-
 
 int main(int argc, char** argv) {
   if (argc != 2) {
