@@ -1,0 +1,49 @@
+name: QA
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+        - main
+
+env:
+  compiler-pkg: g++-13 cmake
+  compiler-C: gcc-13
+  compiler-CXX: g++-13
+
+jobs:
+  quality:
+    name: Build and test C++
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [Debug, Release]
+        sanitize: ["sanitizer_enabled", "sanitizer_disabled"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        shell: bash
+        run: |
+          DEBIAN_FRONTEND=noninteractive sudo apt update
+          DEBIAN_FRONTEND=noninteractive sudo apt install -y ${{ env.compiler-pkg }}
+      - name: Build
+        shell: bash
+        run: |
+          set -eu
+
+          if [ "${{ matrix.sanitize }}" = "sanitizer_enabled" ]; then
+            export ENABLE_SANITIZER=1
+          fi
+          C=${{ env.compiler-C }} CXX=${{ env.compiler-CXX }} BUILD_TYPE="${{ matrix.profile }}" BUILD_TESTS=1 ./make
+      - name: Test VM
+        shell: bash
+        run: |
+          "./build/${{ matrix.profile }}/vm/test/testvm"
+      - name: Test assembler
+        shell: bash
+        run: |
+          "./build/${{ matrix.profile }}/assembler/test/testassembler"

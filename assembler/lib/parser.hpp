@@ -41,7 +41,7 @@ void apply_production_rule(std::stack<Node*>& stack, Iterable replace) {
   const auto rend = top->children.rbegin();
   std::transform(
       replace.begin(), replace.end(), std::back_inserter(top->children),
-      [](Token const& token) { return std::make_unique<Node>(token); });
+      [](Token const& token) { return std::make_unique<Node>(Node{.token = token}); });
   const auto rbegin = top->children.rbegin();
 
   // Adding new symbols to stack (in reverse)
