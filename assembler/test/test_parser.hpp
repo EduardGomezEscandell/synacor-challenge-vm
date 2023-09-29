@@ -7,7 +7,7 @@
 
 #include "lib/parser.hpp"
 #include "lib/tokenizer.hpp"
-#include "test/utils.hpp"
+#include "testutils/utils.hpp"
 
 inline void test_parser(std::string_view test_name, bool want_success) {
   auto lock = SET_TEST_DIR();

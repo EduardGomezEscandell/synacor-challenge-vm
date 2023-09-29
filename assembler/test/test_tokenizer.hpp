@@ -6,7 +6,7 @@
 #include <fstream>
 
 #include "lib/tokenizer.hpp"
-#include "test/utils.hpp"
+#include "testutils/utils.hpp"
 
 inline void test_tokenizer(std::string_view test_name, bool want_success) {
   auto lock = SET_TEST_DIR();
