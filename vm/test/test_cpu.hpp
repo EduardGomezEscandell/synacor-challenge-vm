@@ -31,4 +31,6 @@ TEST_CASE("cpu") {
   SUBCASE("out") { test_cpu("cpu/out"); }
   SUBCASE("set") { test_cpu("cpu/set"); }
   SUBCASE("add") { test_cpu("cpu/add"); }
+  SUBCASE("push-pop-register") { test_cpu("cpu/push-pop-register"); }
+  SUBCASE("push-pop-memory") { test_cpu("cpu/push-pop-memory"); }
 }

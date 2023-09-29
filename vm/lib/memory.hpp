@@ -7,6 +7,7 @@
 #include <cstring>
 #include <istream>
 #include <iterator>
+#include <stack>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -23,7 +24,7 @@ public:
 private:
   std::array<Word, register_count> m_registers;
   std::array<Word, heap_size> m_heap;
-  std::vector<Word> m_stack;
+  std::stack<Word> m_stack;
 
 public:
   Word &operator[](Word idx) {
@@ -47,6 +48,16 @@ public:
   Word operator[](Number addr) const noexcept { return m_heap[addr.to_uint()]; }
 
   Word &operator[](Number addr) noexcept { return m_heap[addr.to_uint()]; }
+
+  void push(Word val) {
+    m_stack.push(val);
+  }
+
+  Word pop() {
+    Word n = m_stack.top();
+    m_stack.pop();
+    return n;
+  }
 
   void load(std::basic_string<std::byte> in) {
     std::size_t len = in.size();

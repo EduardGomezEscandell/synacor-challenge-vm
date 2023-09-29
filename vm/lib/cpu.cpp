@@ -31,13 +31,23 @@ bool CPU::Step() {
   case HALT:
     return false;
   case SET: {
-    Word *aptr = in_prt(memory, instruction_pointer++);
+    Word *const aptr = in_prt(memory, instruction_pointer++);
     Word b = out_ptr(memory, instruction_pointer++);
     *aptr = b;
     return true;
   }
+  case PUSH: {
+    const Word w = out_ptr(memory, instruction_pointer++);
+    memory.push(w);
+    return true;
+  }
+  case POP: {
+    Word *const ptr = in_prt(memory, instruction_pointer++);
+    *ptr = memory.pop();
+    return true;
+  }
   case ADD: {
-    Word *aptr = in_prt(memory, instruction_pointer++);
+    Word *const aptr = in_prt(memory, instruction_pointer++);
     Word b = out_ptr(memory, instruction_pointer++);
     Word c = out_ptr(memory, instruction_pointer++);
     *aptr = Word(b + c);
