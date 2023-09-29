@@ -14,30 +14,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 
-#define CASE_ERRONEOUS             \
-  case Symbol::NONE:               \
-  case Symbol::UNKNOWN_IDENTIFIER: \
-  case Symbol::ERROR
-
-#define CASE_NONTERMINAL \
-  case Symbol::Start:    \
-  case Symbol::P:        \
-  case Symbol::T:        \
-  case Symbol::I:        \
-  case Symbol::D:        \
-  case Symbol::W
-
-#define CASE_TERMINAL             \
-  case Symbol::END:               \
-  case Symbol::NUMBER_LITERAL:    \
-  case Symbol::CHARACTER_LITERAL: \
-  case Symbol::STRING_LITERAL:    \
-  case Symbol::REGISTER:          \
-  case Symbol::TAG_DECL:          \
-  case Symbol::TAG_REF:           \
-  case Symbol::VERB:              \
-  case Symbol::EOL
-
 [[nodiscard]] bool rule_Start(std::stack<Node*>& stack, Token const& input);
 [[nodiscard]] bool rule_P(std::stack<Node*>& stack, Token const& input);
 [[nodiscard]] bool rule_T(std::stack<Node*>& stack, Token const& input);

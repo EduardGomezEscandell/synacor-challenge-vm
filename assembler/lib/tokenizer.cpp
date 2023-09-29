@@ -12,19 +12,15 @@
 #include "arch/arch.hpp"
 #include "assembler/lib/grammar.hpp"
 
-#define CASE_NONTERMINAL \
-  case Symbol::Start:    \
-  case Symbol::P:        \
-  case Symbol::T:        \
-  case Symbol::I:        \
-  case Symbol::D:        \
-  case Symbol::W
-
 std::vector<std::byte> str_to_bytes(std::string str);
 constexpr std::optional<char> escape(char ch);
 
 std::pair<std::vector<Token>, bool> tokenize(std::string file_name) {
   std::ifstream f(file_name.c_str(), std::ios_base::binary);
+  if(!f) {
+    std::cerr << std::format("could not open file {}\n", file_name);
+    return {{}, false};
+  }
 
   std::vector<Token> tokenized;
   TokenParser p{.file_name = std::move(file_name)};

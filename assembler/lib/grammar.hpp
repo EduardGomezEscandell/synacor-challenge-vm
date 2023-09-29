@@ -40,7 +40,7 @@ enum class Symbol : int {
   ERROR,               // Erroneous input
 };
 
-struct Token { 
+struct Token {
   constexpr Token(Symbol symbol = Symbol::NONE, std::vector<std::byte> data = {}) :
     symbol{symbol}, data{data}
   {}
@@ -73,3 +73,27 @@ constexpr bool operator==(Token other) const noexcept {
     unsigned m_row;
     unsigned m_col;
 };
+
+#define CASE_ERRONEOUS             \
+  case Symbol::NONE:               \
+  case Symbol::UNKNOWN_IDENTIFIER: \
+  case Symbol::ERROR
+
+#define CASE_NONTERMINAL \
+  case Symbol::Start:    \
+  case Symbol::P:        \
+  case Symbol::T:        \
+  case Symbol::I:        \
+  case Symbol::D:        \
+  case Symbol::W
+
+#define CASE_TERMINAL             \
+  case Symbol::END:               \
+  case Symbol::NUMBER_LITERAL:    \
+  case Symbol::CHARACTER_LITERAL: \
+  case Symbol::STRING_LITERAL:    \
+  case Symbol::REGISTER:          \
+  case Symbol::TAG_DECL:          \
+  case Symbol::TAG_REF:           \
+  case Symbol::VERB:              \
+  case Symbol::EOL

@@ -42,7 +42,7 @@ std::string Token::fmt() const {
       return std::format("<TAG_REF {}>", as_str());
     case Symbol::VERB:
       return std::format("<VERB {}>",
-                         arch::to_string(static_cast<Verb>(as_number())));
+                         arch::to_string(as_opcode()));
     // Special tokens
     case Symbol::NONE:
       return "{NONE}";

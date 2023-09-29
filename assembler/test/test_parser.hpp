@@ -13,8 +13,8 @@ inline void test_parser(std::string_view test_name, bool want_success) {
   auto lock = SET_TEST_DIR();
 
   auto [tokenized, ok] = tokenize(fixture_path(test_name));
-  REQUIRE_MESSAGE(ok, "Setup: unsuccesful tokenization");
-    
+  REQUIRE_MESSAGE(ok, "Setup: unsuccessful tokenization");
+
   auto [root, success] = parse(tokenized.begin(), tokenized.end());
   if (want_success) {
     REQUIRE(success);
