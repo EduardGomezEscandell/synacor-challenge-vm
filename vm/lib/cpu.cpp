@@ -1,20 +1,22 @@
 #include "cpu.hpp"
 
 #include <exception>
+#include <format>
 #include <istream>
 #include <ostream>
+#include <stdexcept>
 #include <string_view>
 
 #include "arch/arch.hpp"
 
 namespace SynacorVM {
 
-Word* in_prt(Memory& m, Number ptr) {
+Word *in_prt(Memory &m, Number ptr) {
   const Word v = m[ptr];
   return &m[v];
 }
 
-Word out_ptr(Memory& m, Number ptr) {
+Word out_ptr(Memory &m, Number ptr) {
   const Word v = m[ptr];
   if (v < Memory::heap_size) {
     return v;
@@ -23,47 +25,48 @@ Word out_ptr(Memory& m, Number ptr) {
   return m[v];
 }
 
-void CPU::Step() {
-  auto opcode = Number(mem[instruction_pointer++].to_uint());
+bool CPU::Step() {
+  auto opcode = Number(memory[instruction_pointer++].to_uint());
   switch (opcode.to_int()) {
-    case HALT:
-      return;
-    case SET: {
-      Word* aptr = in_prt(mem, instruction_pointer++);
-      Word b = out_ptr(mem, instruction_pointer++);
-      *aptr = b;
-      return;
-    }
-    case ADD: {
-      Word* aptr = in_prt(mem, instruction_pointer++);
-      Word b = out_ptr(mem, instruction_pointer++);
-      Word c = out_ptr(mem, instruction_pointer++);
-      *aptr = Word(b + c);
-      break;
-    }
-    case OUT: {
-      Word a = out_ptr(mem, instruction_pointer++);
-      assert(a < 256);
-      terminal << static_cast<char>(a.to_uint());
-      break;
-    }
-    case NOOP:
-      break;
+  case HALT:
+    return false;
+  case SET: {
+    Word *aptr = in_prt(memory, instruction_pointer++);
+    Word b = out_ptr(memory, instruction_pointer++);
+    *aptr = b;
+    return true;
   }
+  case ADD: {
+    Word *aptr = in_prt(memory, instruction_pointer++);
+    Word b = out_ptr(memory, instruction_pointer++);
+    Word c = out_ptr(memory, instruction_pointer++);
+    *aptr = Word(b + c);
+    return true;
+  }
+  case OUT: {
+    Word a = out_ptr(memory, instruction_pointer++);
+    assert(a < 256);
+    terminal << static_cast<char>(a.to_uint());
+    return true;
+  }
+  case NOOP:
+    return true;
+  }
+
+  throw std::runtime_error(std::format("Unknwon OP code {}", opcode.to_int()));
 }
 
 void CPU::Run() noexcept {
-      instruction_pointer = Number(0);
+  instruction_pointer = Number(0);
 
-      try {
-        while (true) {
-          Step();
-        }
-      } catch (std::exception& e) {
-        terminal << "\nFATAL ERROR\n" << e.what() << std::endl;
-      } catch (...) {
-        terminal << "\nFATAL ERROR\nUnknown reasons" << std::endl;
-      }
+  try {
+    while (Step()) {
+    }
+  } catch (std::exception &e) {
+    terminal << "\nFATAL ERROR\n" << e.what() << std::endl;
+  } catch (...) {
+    terminal << "\nFATAL ERROR\nUnknown reasons" << std::endl;
+  }
 }
 
-}  // namespace SynacorVM
+} // namespace SynacorVM

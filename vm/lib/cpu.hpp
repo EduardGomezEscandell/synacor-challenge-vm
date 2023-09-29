@@ -4,20 +4,19 @@
 #include <ostream>
 
 #include "memory.hpp"
+#include "word.hpp"
 
 namespace SynacorVM {
 
-class CPU {
-  Memory mem;
-  Number instruction_pointer;
-  std::ostream& terminal = std::cout;
-
- public:
-  std::size_t Load(std::istream& in) { return mem.Load(in); }
+struct CPU {
+  Memory &memory;
+  std::ostream &terminal = std::cout;
 
   void Run() noexcept;
 
-  void Step();
+  bool Step();
+
+  Number instruction_pointer = Number(0);
 };
 
-}  // namespace SynacorVM
+} // namespace SynacorVM

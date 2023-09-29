@@ -4,6 +4,7 @@
 #include <compare>
 #include <concepts>
 #include <cstddef>
+#include <array>
 #include <cstdint>
 #include <string_view>
 
@@ -12,7 +13,7 @@ namespace SynacorVM {
 template <unsigned MaxBit>
 class Value {
   static_assert(MaxBit <= 16);
-  std::byte m_data[2];
+  std::array<std::byte, 2> m_data;
 
  public:
   constexpr static std::int32_t max = 1 << MaxBit;
@@ -27,10 +28,7 @@ class Value {
     *this = Value(num);
   }
 
-  explicit constexpr Value(std::byte b[2]) {
-    m_data[0] = b[0];
-    m_data[1] = b[1];
-
+  explicit constexpr Value(std::array<std::byte, 2> b) : m_data(b){
     assert(to_int() < max);
   }
 
@@ -39,7 +37,7 @@ class Value {
     assert(x < max);
 
     m_data[0] = std::byte(x & 0x00ff);
-    m_data[1] = std::byte(x & 0xff00);
+    m_data[1] = std::byte((x & 0xff00) >> 8);
   }
 
   constexpr std::int32_t to_int() const noexcept {
