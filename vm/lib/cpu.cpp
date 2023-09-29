@@ -28,53 +28,93 @@ Word out_ptr(Memory &m, Number ptr) {
 bool CPU::Step() {
   auto opcode = Number(memory[instruction_pointer++].to_uint());
   switch (opcode.to_int()) {
-  case HALT:
-    return false;
-  case SET: {
-    Word *const aptr = in_prt(memory, instruction_pointer++);
-    Word b = out_ptr(memory, instruction_pointer++);
-    *aptr = b;
-    return true;
-  }
-  case PUSH: {
-    const Word w = out_ptr(memory, instruction_pointer++);
-    memory.push(w);
-    return true;
-  }
-  case POP: {
-    Word *const ptr = in_prt(memory, instruction_pointer++);
-    *ptr = memory.pop();
-    return true;
-  }
-  case EQ: {
-    Word *const aptr = in_prt(memory, instruction_pointer++);
-    Word b = out_ptr(memory, instruction_pointer++);
-    Word c = out_ptr(memory, instruction_pointer++);
-    *aptr = (b == c) ? Word(1) : Word(0);
-    return true;
-  }
-  case GT: {
-    Word *const aptr = in_prt(memory, instruction_pointer++);
-    Word b = out_ptr(memory, instruction_pointer++);
-    Word c = out_ptr(memory, instruction_pointer++);
-    *aptr = (b > c) ? Word(1) : Word(0);
-    return true;
-  }
-  case ADD: {
-    Word *const aptr = in_prt(memory, instruction_pointer++);
-    Word b = out_ptr(memory, instruction_pointer++);
-    Word c = out_ptr(memory, instruction_pointer++);
-    *aptr = Word(b + c);
-    return true;
-  }
-  case OUT: {
-    Word a = out_ptr(memory, instruction_pointer++);
-    assert(a < 256);
-    terminal << static_cast<char>(a.to_uint());
-    return true;
-  }
-  case NOOP:
-    return true;
+    case HALT:
+      return false;
+    case SET: {
+      Word *const aptr = in_prt(memory, instruction_pointer++);
+      Word b = out_ptr(memory, instruction_pointer++);
+      *aptr = b;
+      return true;
+    }
+    case PUSH: {
+      const Word w = out_ptr(memory, instruction_pointer++);
+      memory.push(w);
+      return true;
+    }
+    case POP: {
+      Word *const ptr = in_prt(memory, instruction_pointer++);
+      *ptr = memory.pop();
+      return true;
+    }
+    case EQ: {
+      Word *const aptr = in_prt(memory, instruction_pointer++);
+      Word b = out_ptr(memory, instruction_pointer++);
+      Word c = out_ptr(memory, instruction_pointer++);
+      *aptr = (b == c) ? Word(1) : Word(0);
+      return true;
+    }
+    case GT: {
+      Word *const aptr = in_prt(memory, instruction_pointer++);
+      Word b = out_ptr(memory, instruction_pointer++);
+      Word c = out_ptr(memory, instruction_pointer++);
+      *aptr = (b > c) ? Word(1) : Word(0);
+      return true;
+    }
+    case JMP: {
+      Word pos = out_ptr(memory, instruction_pointer++);
+      if (pos > Memory::heap_size) {
+        throw std::runtime_error(std::format(
+            "Attempted to move instruction pointer to non-existing address {}",
+            pos.to_uint()));
+      }
+      instruction_pointer = Number(pos);
+      return true;
+    }
+    case JT: {
+      Word cond = out_ptr(memory, instruction_pointer++);
+      Word pos = out_ptr(memory, instruction_pointer++);
+      if (!cond.nonzero()) {
+        return true;
+      }
+      if (pos > Memory::heap_size) {
+        throw std::runtime_error(
+            std::format("Attempted to move instruction pointer to "
+                        "non-existing address {}",
+                        pos.to_uint()));
+      }
+      instruction_pointer = Number(pos);
+      return true;
+    }
+    case JF: {
+      Word cond = out_ptr(memory, instruction_pointer++);
+      Word pos = out_ptr(memory, instruction_pointer++);
+      if (cond.nonzero()) {
+        return true;
+      }
+      if (pos > Memory::heap_size) {
+        throw std::runtime_error(
+            std::format("Attempted to move instruction pointer to "
+                        "non-existing address {}",
+                        pos.to_uint()));
+      }
+      instruction_pointer = Number(pos);
+      return true;
+    }
+    case ADD: {
+      Word *const aptr = in_prt(memory, instruction_pointer++);
+      Word b = out_ptr(memory, instruction_pointer++);
+      Word c = out_ptr(memory, instruction_pointer++);
+      *aptr = Word(b + c);
+      return true;
+    }
+    case OUT: {
+      Word a = out_ptr(memory, instruction_pointer++);
+      assert(a < 256);
+      terminal << static_cast<char>(a.to_uint());
+      return true;
+    }
+    case NOOP:
+      return true;
   }
 
   throw std::runtime_error(std::format("Unknown OP code {}", opcode.to_int()));
@@ -93,4 +133,4 @@ void CPU::Run() noexcept {
   }
 }
 
-} // namespace SynacorVM
+}  // namespace SynacorVM

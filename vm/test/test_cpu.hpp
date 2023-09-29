@@ -37,4 +37,7 @@ TEST_CASE("cpu") {
   CPU_SUBCASE("push-pop-memory")
   CPU_SUBCASE("eq")
   CPU_SUBCASE("gt")
+  CPU_SUBCASE("jmp")
+  CPU_SUBCASE("jt")
+  CPU_SUBCASE("jf")
 }

@@ -51,6 +51,10 @@ class Value {
            static_cast<std::uint32_t>(m_data[0]);
   }
 
+  constexpr bool nonzero() const noexcept {
+    return to_int() != 0;
+  }
+
   template <unsigned N>
   constexpr std::strong_ordering operator<=>(Value<N> other) const noexcept {
     return this->to_int() <=> other.to_int();
