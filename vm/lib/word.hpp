@@ -1,12 +1,13 @@
 #pragma once
 
+#include <array>
 #include <cassert>
 #include <compare>
 #include <concepts>
 #include <cstddef>
-#include <array>
 #include <cstdint>
 #include <string_view>
+#include <type_traits>
 
 namespace SynacorVM {
 
@@ -28,7 +29,7 @@ class Value {
     *this = Value(num);
   }
 
-  explicit constexpr Value(std::array<std::byte, 2> b) : m_data(b){
+  explicit constexpr Value(std::array<std::byte, 2> b) : m_data(b) {
     assert(to_int() < max);
   }
 
@@ -50,14 +51,34 @@ class Value {
            static_cast<std::uint32_t>(m_data[0]);
   }
 
-  constexpr std::strong_ordering operator<=>(Value other) const noexcept {
+  template <unsigned N>
+  constexpr std::strong_ordering operator<=>(Value<N> other) const noexcept {
     return this->to_int() <=> other.to_int();
   }
 
-  constexpr std::strong_ordering operator<=>(
-      std::integral auto other) const noexcept {
-    return static_cast<long long>(this->to_int()) <=>
-           static_cast<long long>(other);
+  template <unsigned N>
+  constexpr bool operator==(Value<N> other) const noexcept {
+    return this->to_int() == other.to_int();
+  }
+
+  template <unsigned N>
+  constexpr bool operator!=(Value<N> other) const noexcept {
+    return this->to_int() != other.to_int();
+  }
+
+  using biggest_int = long long int;
+
+  template <std::integral T>
+  constexpr std::strong_ordering operator<=>(T other) const noexcept {
+    return biggest_int(this->to_int()) <=> biggest_int(other);
+  }
+
+  constexpr bool operator==(std::integral auto other) const noexcept {
+    return biggest_int(this->to_int()) != biggest_int(other);
+  }
+
+  constexpr bool operator!=(std::integral auto other) const noexcept {
+    return biggest_int(this->to_int()) != biggest_int(other);
   }
 
   Value<15> operator++(int) noexcept {

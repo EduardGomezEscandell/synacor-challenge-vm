@@ -26,11 +26,15 @@ inline void test_cpu(std::string_view test_name) {
   testutils::check_golden(std::format("{}/stdout", test_name), out.str());
 }
 
+#define CPU_SUBCASE(name)  SUBCASE(name) { test_cpu(std::format("cpu/{}", name)); }
+
 TEST_CASE("cpu") {
-  SUBCASE("halt") { test_cpu("cpu/halt"); }
-  SUBCASE("out") { test_cpu("cpu/out"); }
-  SUBCASE("set") { test_cpu("cpu/set"); }
-  SUBCASE("add") { test_cpu("cpu/add"); }
-  SUBCASE("push-pop-register") { test_cpu("cpu/push-pop-register"); }
-  SUBCASE("push-pop-memory") { test_cpu("cpu/push-pop-memory"); }
+  CPU_SUBCASE("halt")
+  CPU_SUBCASE("out")
+  CPU_SUBCASE("set")
+  CPU_SUBCASE("add")
+  CPU_SUBCASE("push-pop-register")
+  CPU_SUBCASE("push-pop-memory")
+  CPU_SUBCASE("eq")
+  CPU_SUBCASE("gt")
 }

@@ -46,6 +46,20 @@ bool CPU::Step() {
     *ptr = memory.pop();
     return true;
   }
+  case EQ: {
+    Word *const aptr = in_prt(memory, instruction_pointer++);
+    Word b = out_ptr(memory, instruction_pointer++);
+    Word c = out_ptr(memory, instruction_pointer++);
+    *aptr = (b == c) ? Word(1) : Word(0);
+    return true;
+  }
+  case GT: {
+    Word *const aptr = in_prt(memory, instruction_pointer++);
+    Word b = out_ptr(memory, instruction_pointer++);
+    Word c = out_ptr(memory, instruction_pointer++);
+    *aptr = (b > c) ? Word(1) : Word(0);
+    return true;
+  }
   case ADD: {
     Word *const aptr = in_prt(memory, instruction_pointer++);
     Word b = out_ptr(memory, instruction_pointer++);
