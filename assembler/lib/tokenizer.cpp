@@ -404,12 +404,12 @@ void TokenParser::clear() {
 Token TokenParser::finalize_NUMBER() {
   assert(value <= 0xffff);
   return {Symbol::NUMBER_LITERAL,
-          {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+          {std::byte(value & 0xff), std::byte((value & 0xff00)>>8)}};
 }
 
 Token TokenParser::finalize_CHARACTER() {
   return {Symbol::CHARACTER_LITERAL,
-          {std::byte(value & 0xff), std::byte(value & 0xff00)}};
+          {std::byte(value & 0xff), std::byte((value & 0xff00)>>8)}};
 }
 
 Token TokenParser::finalize_STRING() {
