@@ -63,7 +63,7 @@ bool CPU::Step() {
     return true;
   }
 
-  throw std::runtime_error(std::format("Unknwon OP code {}", opcode.to_int()));
+  throw std::runtime_error(std::format("Unknown OP code {}", opcode.to_int()));
 }
 
 void CPU::Run() noexcept {
