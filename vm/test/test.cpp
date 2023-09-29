@@ -1,3 +1,3 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include "cpu.hpp"
+#include "test_cpu.hpp"
