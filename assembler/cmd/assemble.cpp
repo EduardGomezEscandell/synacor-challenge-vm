@@ -33,6 +33,11 @@ int main(int argc, char **argv) {
   }
 
   ::FILE *f = ::fopen(argv[2], "wb");
+  if(f == nullptr) {
+    std::cerr << "Failed to open outfile" << std::endl;
+    return EXIT_FAILURE;
+  }
+
   if(auto n = ::fwrite(code.data(), code.size(), 1, f); n != 1) {
     std::cerr << "Failed to write outfile" << std::endl;
     return EXIT_FAILURE;

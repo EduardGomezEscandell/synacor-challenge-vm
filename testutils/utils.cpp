@@ -17,6 +17,8 @@
 #include <string_view>
 #include <vector>
 
+namespace testutils {
+
 std::string sanitize(std::string_view test_name) {
   std::string sanitized(test_name.size(), 'x');
 
@@ -59,7 +61,9 @@ set_test_dir(std::string_view file) {
       std::unique_ptr<std::filesystem::path, void (*)(std::filesystem::path *)>(
           oldpath, &reset_path_deleter);
 
-  std::filesystem::current_path(std::filesystem::path(file).parent_path());
+  const std::filesystem::path dest = std::filesystem::path(file).parent_path();
+  INFO(std::format("Running test with CWD located at {}\n", dest.string()));
+  std::filesystem::current_path(dest);
 
   return raii;
 }
@@ -101,22 +105,8 @@ void check_golden(std::string_view test_name, std::string_view got) {
 
 void check_golden_binary(std::string_view test_name,
                          std::basic_string_view<std::byte> got) {
-  const std::string goldenPath =
-      std::format("testdata/golden/{}.out", sanitize(test_name));
-
-  // Read binary file
-  FILE *f = ::fopen(goldenPath.c_str(), "rb");
-  if(f == nullptr) {
-    FAIL(std::format("Setup: could not open golden file {}", goldenPath));
-  }
-
-  ::fseek(f, 0, SEEK_END);
-  auto fsize = std::size_t(::ftell(f));
-  ::fseek(f, 0, SEEK_SET);
-
-  std::vector<std::byte> want(fsize, std::byte(0));
-  std::ignore = ::fread(want.data(), fsize, 1, f);
-  ::fclose(f);
+  const auto want =
+      read_binary(std::format("testdata/golden/{}.out", sanitize(test_name)));
 
   // Check diff
   auto [iWant, iGot] =
@@ -131,7 +121,7 @@ void check_golden_binary(std::string_view test_name,
   std::stringstream msg;
   msg << '\n';
 
-  constexpr auto line_len = 16;
+  constexpr auto line_len = 32;
   std::size_t line = std::size_t(idx) / line_len;
 
   // Print header
@@ -164,3 +154,24 @@ void check_golden_binary(std::string_view test_name,
 
   FAIL(msg.str());
 }
+
+std::basic_string<std::byte> read_binary(std::string file_name) {
+  // Read binary file
+  FILE *f = ::fopen(file_name.c_str(), "rb");
+  if (f == nullptr) {
+    FAIL(std::format("Setup: could not open binary file {}",
+                     (std::filesystem::current_path() / file_name).string()));
+  }
+
+  ::fseek(f, 0, SEEK_END);
+  auto fsize = std::size_t(::ftell(f));
+  ::fseek(f, 0, SEEK_SET);
+
+  std::basic_string<std::byte> buffer(fsize, std::byte(0));
+  std::ignore = ::fread(buffer.data(), fsize, 1, f);
+  ::fclose(f);
+
+  return buffer;
+}
+
+} // namespace testutils

@@ -2,6 +2,8 @@
 
 #include <cassert>
 #include <cctype>
+#include <cstdio>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <ios>
@@ -16,9 +18,14 @@ std::vector<std::byte> str_to_bytes(std::string str);
 constexpr std::optional<char> escape(char ch);
 
 std::pair<std::vector<Token>, bool> tokenize(std::string file_name) {
-  std::ifstream f(file_name.c_str(), std::ios_base::binary);
-  if(!f) {
-    std::cerr << std::format("could not open file {}\n", file_name);
+  if(!std::filesystem::exists(file_name)) {
+    std::cerr << std::format("File {} does not exist\n", file_name);
+    return {{}, false};
+  }
+
+  std::ifstream f(file_name.c_str(), std::ios::binary);
+  if(!f.good()) {
+    std::cerr << std::format("Could not open file {}\n", file_name);
     return {{}, false};
   }
 
@@ -277,7 +284,7 @@ bool TokenParser::consume_CHARACTER(char ch) {
         const auto x = escape(ch);
         if (x.has_value()) {
           prev_char = 0;
-          value = static_cast<unsigned>(ch);
+          value = static_cast<unsigned>(*x);
           return false;
         }
         return error(

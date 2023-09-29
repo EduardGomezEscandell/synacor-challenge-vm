@@ -12,7 +12,7 @@
 inline void test_parser(std::string_view test_name, bool want_success) {
   auto lock = SET_TEST_DIR();
 
-  auto [tokenized, ok] = tokenize(fixture_path(test_name));
+  auto [tokenized, ok] = tokenize(testutils::fixture_path(test_name));
   REQUIRE_MESSAGE(ok, "Setup: unsuccessful tokenization");
 
   auto [root, success] = parse(tokenized.begin(), tokenized.end());
@@ -25,7 +25,7 @@ inline void test_parser(std::string_view test_name, bool want_success) {
   std::stringstream ss;
   ss << root;
 
-  check_golden(test_name, ss.str());
+  testutils::check_golden(test_name, ss.str());
 }
 
 TEST_CASE("parser") {

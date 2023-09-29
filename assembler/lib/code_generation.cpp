@@ -4,7 +4,6 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
-#include <execution>
 #include <format>
 #include <map>
 #include <ostream>
