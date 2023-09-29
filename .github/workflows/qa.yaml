@@ -39,14 +39,27 @@ jobs:
             export ENABLE_SANITIZER=1
           fi
           C=${{ env.compiler-C }} CXX=${{ env.compiler-CXX }} BUILD_TYPE="${{ matrix.profile }}" BUILD_TESTS=1 ./make
-      - name: Test VM
-        shell: bash
-        run: |
-          "./build/${{ matrix.profile }}/vm/test/testvm"
       - name: Test assembler
         shell: bash
         run: |
           "./build/${{ matrix.profile }}/assembler/test/testassembler"
+      - name: Validate test fixtures are up to date
+        shell: bash
+        run: |
+          set -eu
+          BUILD_TYPE="${{ matrix.profile }}" ./vm/test/testdata/fixtures/assemble-all.sh
+
+          git diff ./vm/test/testdata/fixtures/ > /tmp/diff
+          if [ -n "$(cat /tmp/diff)" ]; then
+            echo "Error: Your fixture binaries are not up to date!" >&2
+            cat /tmp/diff
+            # exit 1
+          fi
+      - name: Test VM
+        shell: bash
+        run: |
+          "./build/${{ matrix.profile }}/vm/test/testvm"
+
   challenge:
     name: Validate challenge
     runs-on: ubuntu-latest
