@@ -29,5 +29,3 @@ After having assembled a binary, you can run it with:
 ```bash
 ./build/Release/vm/cmd/runvm hello-world.syn
 ```
-
-Note that the instruction set is not fully implemented yet, so most programs will fail.
