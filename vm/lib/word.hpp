@@ -85,15 +85,10 @@ class Value {
     return biggest_int(this->to_int()) != biggest_int(other);
   }
 
-  Value<15> operator++(int) noexcept {
+  Value operator++(int) noexcept {
     const auto ret = Value<15>(m_data);
     *this = Value((this->to_uint() + 1) % modulo);
     return ret;
-  }
-
-  constexpr Value<15> operator+(Value const& other) const noexcept {
-    const auto sum = this->to_uint() + other.to_uint();
-    return Value<15>(sum % static_cast<int>(modulo));
   }
 };
 

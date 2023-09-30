@@ -107,7 +107,7 @@ bool CPU::Step() {
       Word *const aptr = in_prt(memory, instruction_pointer++);
       Word b = out_ptr(memory, instruction_pointer++);
       Word c = out_ptr(memory, instruction_pointer++);
-      *aptr = Word(b + c);
+      *aptr = Word((b.to_uint() + c.to_uint()) % 0x8000u) ;
       return true;
     }
     case OUT: {
