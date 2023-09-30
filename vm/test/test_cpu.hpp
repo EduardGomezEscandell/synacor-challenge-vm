@@ -45,4 +45,5 @@ TEST_CASE("cpu") {
   CPU_SUBCASE("and")
   CPU_SUBCASE("or")
   CPU_SUBCASE("not")
+  CPU_SUBCASE("call-ret")
 }

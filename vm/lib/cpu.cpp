@@ -25,6 +25,15 @@ Word read(Memory &m, Number ptr) {
   return m[v];
 }
 
+[[nodiscard]] Number jump(Word destination) {
+  if (destination > Memory::heap_size) {
+    throw std::runtime_error(std::format(
+        "Attempted to move instruction pointer to non-existing address {:04x}",
+        destination.to_uint()));
+  }
+  return Number(destination);
+}
+
 bool CPU::Step() {
   auto opcode = Number(memory[instruction_pointer++].to_uint());
   switch (opcode.to_int()) {
@@ -32,7 +41,7 @@ bool CPU::Step() {
       return false;
     case SET: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
+      Word const b = read(memory, instruction_pointer++);
       *a = b;
       return true;
     }
@@ -43,7 +52,7 @@ bool CPU::Step() {
     }
     case POP: {
       Word *const ptr = write_prt(memory, instruction_pointer++);
-      if(memory.stack_ptr() == 0) {
+      if (memory.stack_ptr() == 0) {
         throw std::runtime_error("Called POP with an empty stack");
       }
       *ptr = memory.pop();
@@ -51,97 +60,94 @@ bool CPU::Step() {
     }
     case EQ: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
-      Word c = read(memory, instruction_pointer++);
+      Word const b = read(memory, instruction_pointer++);
+      Word const c = read(memory, instruction_pointer++);
       *a = (b == c) ? Word(1) : Word(0);
       return true;
     }
     case GT: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
-      Word c = read(memory, instruction_pointer++);
+      Word const b = read(memory, instruction_pointer++);
+      Word const c = read(memory, instruction_pointer++);
       *a = (b > c) ? Word(1) : Word(0);
       return true;
     }
     case JMP: {
-      Word pos = read(memory, instruction_pointer++);
-      if (pos > Memory::heap_size) {
-        throw std::runtime_error(std::format(
-            "Attempted to move instruction pointer to non-existing address {}",
-            pos.to_uint()));
-      }
-      instruction_pointer = Number(pos);
+      Word const pos = read(memory, instruction_pointer++);
+      instruction_pointer = jump(pos);
       return true;
     }
     case JT: {
       Word cond = read(memory, instruction_pointer++);
-      Word pos = read(memory, instruction_pointer++);
+      Word const pos = read(memory, instruction_pointer++);
       if (!cond.nonzero()) {
         return true;
       }
-      if (pos > Memory::heap_size) {
-        throw std::runtime_error(
-            std::format("Attempted to move instruction pointer to "
-                        "non-existing address {}",
-                        pos.to_uint()));
-      }
-      instruction_pointer = Number(pos);
+      instruction_pointer = jump(pos);
       return true;
     }
     case JF: {
       Word cond = read(memory, instruction_pointer++);
-      Word pos = read(memory, instruction_pointer++);
+      Word const pos = read(memory, instruction_pointer++);
       if (cond.nonzero()) {
         return true;
       }
-      if (pos > Memory::heap_size) {
-        throw std::runtime_error(
-            std::format("Attempted to move instruction pointer to "
-                        "non-existing address {}",
-                        pos.to_uint()));
-      }
-      instruction_pointer = Number(pos);
+      instruction_pointer = jump(pos);
       return true;
     }
     case ADD: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
-      Word c = read(memory, instruction_pointer++);
-      *a = Word((b.to_uint() + c.to_uint()) % 0x8000u) ;
+      Word const b = read(memory, instruction_pointer++);
+      Word const c = read(memory, instruction_pointer++);
+      *a = Word((b.to_uint() + c.to_uint()) % 0x8000u);
       return true;
     }
     case MULT: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
-      Word c = read(memory, instruction_pointer++);
-      *a = Word((b.to_uint() * c.to_uint()) % 0x8000u) ;
+      Word const b = read(memory, instruction_pointer++);
+      Word const c = read(memory, instruction_pointer++);
+      *a = Word((b.to_uint() * c.to_uint()) % 0x8000u);
       return true;
     }
     case MOD: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
-      Word c = read(memory, instruction_pointer++);
-      *a = Word(b.to_uint() % c.to_uint()) ;
+      Word const b = read(memory, instruction_pointer++);
+      Word const c = read(memory, instruction_pointer++);
+      *a = Word(b.to_uint() % c.to_uint());
       return true;
     }
     case AND: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
-      Word c = read(memory, instruction_pointer++);
+      Word const b = read(memory, instruction_pointer++);
+      Word const c = read(memory, instruction_pointer++);
       *a = b & c;
       return true;
     }
     case OR: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
-      Word c = read(memory, instruction_pointer++);
+      Word const b = read(memory, instruction_pointer++);
+      Word const c = read(memory, instruction_pointer++);
       *a = b | c;
       return true;
     }
     case NOT: {
       Word *const a = write_prt(memory, instruction_pointer++);
-      Word b = read(memory, instruction_pointer++);
+      Word const b = read(memory, instruction_pointer++);
       *a = ~b;
+      return true;
+    }
+    case CALL: {
+      Word const pos = read(memory, instruction_pointer++);
+      memory.push(Word(instruction_pointer));
+      instruction_pointer = jump(pos);
+      return true;
+    }
+    case RET: {
+      if(memory.stack_ptr() == 0) {
+        return false;
+      }
+      Word const pos = memory.pop();
+      instruction_pointer = jump(pos);
       return true;
     }
     case OUT: {
