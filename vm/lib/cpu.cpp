@@ -11,7 +11,7 @@
 
 namespace SynacorVM {
 
-Word *write_prt(Memory &m, Number ptr) {
+Word *write_ptr(Memory &m, Number ptr) {
   const Word v = m[ptr];
   return &m[v];
 }
@@ -40,7 +40,7 @@ bool CPU::Step() {
     case HALT:
       return false;
     case SET: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       *a = b;
       return true;
@@ -51,7 +51,7 @@ bool CPU::Step() {
       return true;
     }
     case POP: {
-      Word *const ptr = write_prt(memory, instruction_pointer++);
+      Word *const ptr = write_ptr(memory, instruction_pointer++);
       if (memory.stack_ptr() == 0) {
         throw std::runtime_error("Called POP with an empty stack");
       }
@@ -59,14 +59,14 @@ bool CPU::Step() {
       return true;
     }
     case EQ: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
       *a = (b == c) ? Word(1) : Word(0);
       return true;
     }
     case GT: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
       *a = (b > c) ? Word(1) : Word(0);
@@ -96,48 +96,48 @@ bool CPU::Step() {
       return true;
     }
     case ADD: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
       *a = Word((b.to_uint() + c.to_uint()) % 0x8000u);
       return true;
     }
     case MULT: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
       *a = Word((b.to_uint() * c.to_uint()) % 0x8000u);
       return true;
     }
     case MOD: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
       *a = Word(b.to_uint() % c.to_uint());
       return true;
     }
     case AND: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
       *a = b & c;
       return true;
     }
     case OR: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
       *a = b | c;
       return true;
     }
     case NOT: {
-      Word *const a = write_prt(memory, instruction_pointer++);
+      Word *const a = write_ptr(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       *a = ~b;
       return true;
     }
     case RMEM: {
-      Word *const dst = write_prt(memory, instruction_pointer++);
+      Word *const dst = write_ptr(memory, instruction_pointer++);
       Word const ptr = value_or_register(memory, instruction_pointer++);
       *dst = memory[ptr];
       return true;
@@ -163,9 +163,14 @@ bool CPU::Step() {
       return true;
     }
     case OUT: {
-      Word a = value_or_register(memory, instruction_pointer++);
+      Word const a = value_or_register(memory, instruction_pointer++);
       assert(a < 256);
-      terminal << static_cast<char>(a.to_uint());
+      stdOut << static_cast<char>(a.to_uint());
+      return true;
+    }
+    case IN: {
+      Word *const dst = write_ptr(memory, instruction_pointer++);
+      *dst = Word(stdIn.get());
       return true;
     }
     case NOOP:
@@ -182,9 +187,9 @@ void CPU::Run() noexcept {
     while (Step()) {
     }
   } catch (std::exception &e) {
-    terminal << "\nFATAL ERROR\n" << e.what() << std::endl;
+    stdOut << "\nFATAL ERROR\n" << e.what() << std::endl;
   } catch (...) {
-    terminal << "\nFATAL ERROR\nUnknown reasons" << std::endl;
+    stdOut << "\nFATAL ERROR\nUnknown reasons" << std::endl;
   }
 }
 

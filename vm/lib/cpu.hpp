@@ -10,7 +10,9 @@ namespace SynacorVM {
 
 struct CPU {
   Memory &memory;
-  std::ostream &terminal = std::cout;
+
+  std::ostream &stdOut = std::cout;
+  std::istream &stdIn = std::cin;
 
   void Run() noexcept;
 
