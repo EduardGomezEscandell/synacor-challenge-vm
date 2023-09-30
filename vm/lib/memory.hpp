@@ -5,6 +5,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstring>
+#include <format>
 #include <istream>
 #include <iterator>
 #include <stack>
@@ -17,16 +18,16 @@
 namespace SynacorVM {
 
 class Memory {
-public:
+ public:
   constexpr static unsigned register_count = 8;
   constexpr static unsigned heap_size = 1 << 15;
 
-private:
+ private:
   std::array<Word, register_count> m_registers;
   std::array<Word, heap_size> m_heap;
   std::stack<Word> m_stack;
 
-public:
+ public:
   Word &operator[](Word idx) {
     auto i = idx.to_uint();
     if (i < heap_size) {
@@ -38,7 +39,8 @@ public:
       return m_registers[i];
     }
 
-    throw std::runtime_error("Invalid idx");
+    throw std::runtime_error(
+        std::format("Attempted to access inexistent address {:0x}", idx.to_uint()));
   }
 
   Word operator[](Word idx) const {
@@ -49,9 +51,7 @@ public:
 
   Word &operator[](Number addr) noexcept { return m_heap[addr.to_uint()]; }
 
-  void push(Word val) {
-    m_stack.push(val);
-  }
+  void push(Word val) { m_stack.push(val); }
 
   Word pop() {
     Word n = m_stack.top();
@@ -59,23 +59,22 @@ public:
     return n;
   }
 
-  std::size_t stack_ptr() const {
-    return m_stack.size();
-  }
+  std::size_t stack_ptr() const { return m_stack.size(); }
 
   void load(std::basic_string<std::byte> in) {
     std::size_t len = in.size();
-    if (len > heap_size*2) {
-      len = heap_size*2;
+    if (len > heap_size * 2) {
+      len = heap_size * 2;
     }
 
-    ::memset((std::byte*)&m_heap[0], 0, 2*heap_size);
-    ::memcpy((std::byte*)&m_heap[0], &in[0], len);
+    ::memset((std::byte *)&m_heap[0], 0, 2 * heap_size);
+    ::memcpy((std::byte *)&m_heap[0], &in[0], len);
   }
 
   std::basic_string<std::byte> dump() const {
-    auto last = std::find_if_not(m_heap.crbegin(), m_heap.crend(),
-                     [](Word const word) -> bool { return word.to_int() == 0; });
+    auto last = std::find_if_not(
+        m_heap.crbegin(), m_heap.crend(),
+        [](Word const word) -> bool { return word.to_int() == 0; });
 
     const auto size = 2 * std::size_t(std::distance(last, m_heap.crend()));
     std::basic_string<std::byte> out(size, std::byte(0));
@@ -85,4 +84,4 @@ public:
   }
 };
 
-} // namespace SynacorVM
+}  // namespace SynacorVM

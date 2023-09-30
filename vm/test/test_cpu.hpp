@@ -46,4 +46,5 @@ TEST_CASE("cpu") {
   CPU_SUBCASE("or")
   CPU_SUBCASE("not")
   CPU_SUBCASE("call-ret")
+  CPU_SUBCASE("rwmem")
 }
