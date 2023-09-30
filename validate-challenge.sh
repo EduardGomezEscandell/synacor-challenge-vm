@@ -28,17 +28,28 @@ validate() {
 }
 
 tmp=$(mktemp)
-./build/Release/vm/cmd/runvm docs/spec/challenge | tee "$tmp"
+./build/Release/vm/cmd/runvm docs/spec/challenge | tee "$tmp" &
+
+# Keep it running for 5 seconds, then kill the process
+sleep 5
+pid=$(ps -C 'runvm' -o pid --no-headers)
+[ -z "${pid}" ] || {
+    echo "---"
+    echo "Killing process"
+    kill ${pid}
+    echo "Process killed"
+}
+
 echo "---"
 
 code1=`grep "Here's a code for the challenge website:" "docs/spec/spec.txt" | sed 's#^.*: \(.*\)$#\1#'`
 validate 1 $code1
 
 code2=`grep 'this one into the challenge website:' "$tmp" | sed 's#^.*: \(.*\)$#\1#'`
-validate 2 $code2
+validate 2 "${code2}"
 
 code3=`grep 'The self-test completion code is:' "$tmp" | sed 's#^.*: \(.*\)$#\1#'`
-validate 3 $code3
+validate 3 "${code3}"
 
 code4="Unknown!"
-validate 4 $code4
+validate 4 "${code4}"
