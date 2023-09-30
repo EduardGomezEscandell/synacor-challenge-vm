@@ -27,13 +27,14 @@ validate() {
     fi
 }
 
-./build/Release/vm/cmd/runvm docs/spec/challenge | tee /tmp/output.txt
+tmp=$(mktemp)
+./build/Release/vm/cmd/runvm docs/spec/challenge | tee "$tmp"
 echo "---"
 
 code1=`grep "Here's a code for the challenge website:" "docs/spec/spec.txt" | sed 's#^.*: \(.*\)$#\1#'`
 validate 1 $code1
 
-code2=`grep 'this one into the challenge website:' "/tmp/output.txt" | sed 's#^.*: \(.*\)$#\1#'`
+code2=`grep 'this one into the challenge website:' "$tmp" | sed 's#^.*: \(.*\)$#\1#'`
 validate 2 $code2
 
 code3="Unknown!"
