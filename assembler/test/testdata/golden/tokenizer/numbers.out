@@ -7,4 +7,6 @@
 <NUMBER 0> <EOL>
 <NUMBER 855> <EOL>
 <NUMBER 7855> <EOL>
+<NUMBER 47806> <EOL>
+<ERROR Unexpected digit in base-16 number literal: g>
 <END>

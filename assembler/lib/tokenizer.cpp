@@ -242,16 +242,16 @@ bool TokenParser::consume_NUMBER(char ch) {
   } else if ('0' <= ch && ch <= '9') {
     digit = static_cast<unsigned>(ch - '0');
   } else if ('a' <= ch && ch <= 'z') {
-    digit = static_cast<unsigned>(ch - 'a');
+    digit = 10 + static_cast<unsigned>(ch - 'a');
   } else if ('A' <= ch && ch <= 'Z') {
-    digit = static_cast<unsigned>(ch - 'A');
+    digit = 10 + static_cast<unsigned>(ch - 'A');
   } else {
     return error(ch,
                  std::format("Unexpected digit in base-{} number literal: {}",
                              num_base, ch));
   }
 
-  if (digit > num_base) {
+  if (digit >= num_base) {
     return error(ch,
                  std::format("Unexpected digit in base-{} number literal: {}",
                              num_base, ch));
