@@ -43,6 +43,9 @@ bool CPU::Step() {
     }
     case POP: {
       Word *const ptr = in_prt(memory, instruction_pointer++);
+      if(memory.stack_ptr() == 0) {
+        throw std::runtime_error("Called POP with an empty stack");
+      }
       *ptr = memory.pop();
       return true;
     }

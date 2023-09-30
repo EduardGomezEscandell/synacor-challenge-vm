@@ -59,6 +59,10 @@ public:
     return n;
   }
 
+  std::size_t stack_ptr() const {
+    return m_stack.size();
+  }
+
   void load(std::basic_string<std::byte> in) {
     std::size_t len = in.size();
     if (len > heap_size*2) {
