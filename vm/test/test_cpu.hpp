@@ -42,4 +42,7 @@ TEST_CASE("cpu") {
   CPU_SUBCASE("add")
   CPU_SUBCASE("mult")
   CPU_SUBCASE("mod")
+  CPU_SUBCASE("and")
+  CPU_SUBCASE("or")
+  CPU_SUBCASE("not")
 }

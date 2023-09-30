@@ -11,12 +11,12 @@
 
 namespace SynacorVM {
 
-Word *in_prt(Memory &m, Number ptr) {
+Word *write_prt(Memory &m, Number ptr) {
   const Word v = m[ptr];
   return &m[v];
 }
 
-Word out_ptr(Memory &m, Number ptr) {
+Word read(Memory &m, Number ptr) {
   const Word v = m[ptr];
   if (v < Memory::heap_size) {
     return v;
@@ -31,18 +31,18 @@ bool CPU::Step() {
     case HALT:
       return false;
     case SET: {
-      Word *const aptr = in_prt(memory, instruction_pointer++);
-      Word b = out_ptr(memory, instruction_pointer++);
-      *aptr = b;
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      *a = b;
       return true;
     }
     case PUSH: {
-      const Word w = out_ptr(memory, instruction_pointer++);
+      const Word w = read(memory, instruction_pointer++);
       memory.push(w);
       return true;
     }
     case POP: {
-      Word *const ptr = in_prt(memory, instruction_pointer++);
+      Word *const ptr = write_prt(memory, instruction_pointer++);
       if(memory.stack_ptr() == 0) {
         throw std::runtime_error("Called POP with an empty stack");
       }
@@ -50,21 +50,21 @@ bool CPU::Step() {
       return true;
     }
     case EQ: {
-      Word *const aptr = in_prt(memory, instruction_pointer++);
-      Word b = out_ptr(memory, instruction_pointer++);
-      Word c = out_ptr(memory, instruction_pointer++);
-      *aptr = (b == c) ? Word(1) : Word(0);
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      Word c = read(memory, instruction_pointer++);
+      *a = (b == c) ? Word(1) : Word(0);
       return true;
     }
     case GT: {
-      Word *const aptr = in_prt(memory, instruction_pointer++);
-      Word b = out_ptr(memory, instruction_pointer++);
-      Word c = out_ptr(memory, instruction_pointer++);
-      *aptr = (b > c) ? Word(1) : Word(0);
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      Word c = read(memory, instruction_pointer++);
+      *a = (b > c) ? Word(1) : Word(0);
       return true;
     }
     case JMP: {
-      Word pos = out_ptr(memory, instruction_pointer++);
+      Word pos = read(memory, instruction_pointer++);
       if (pos > Memory::heap_size) {
         throw std::runtime_error(std::format(
             "Attempted to move instruction pointer to non-existing address {}",
@@ -74,8 +74,8 @@ bool CPU::Step() {
       return true;
     }
     case JT: {
-      Word cond = out_ptr(memory, instruction_pointer++);
-      Word pos = out_ptr(memory, instruction_pointer++);
+      Word cond = read(memory, instruction_pointer++);
+      Word pos = read(memory, instruction_pointer++);
       if (!cond.nonzero()) {
         return true;
       }
@@ -89,8 +89,8 @@ bool CPU::Step() {
       return true;
     }
     case JF: {
-      Word cond = out_ptr(memory, instruction_pointer++);
-      Word pos = out_ptr(memory, instruction_pointer++);
+      Word cond = read(memory, instruction_pointer++);
+      Word pos = read(memory, instruction_pointer++);
       if (cond.nonzero()) {
         return true;
       }
@@ -104,28 +104,48 @@ bool CPU::Step() {
       return true;
     }
     case ADD: {
-      Word *const aptr = in_prt(memory, instruction_pointer++);
-      Word b = out_ptr(memory, instruction_pointer++);
-      Word c = out_ptr(memory, instruction_pointer++);
-      *aptr = Word((b.to_uint() + c.to_uint()) % 0x8000u) ;
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      Word c = read(memory, instruction_pointer++);
+      *a = Word((b.to_uint() + c.to_uint()) % 0x8000u) ;
       return true;
     }
     case MULT: {
-      Word *const aptr = in_prt(memory, instruction_pointer++);
-      Word b = out_ptr(memory, instruction_pointer++);
-      Word c = out_ptr(memory, instruction_pointer++);
-      *aptr = Word((b.to_uint() * c.to_uint()) % 0x8000u) ;
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      Word c = read(memory, instruction_pointer++);
+      *a = Word((b.to_uint() * c.to_uint()) % 0x8000u) ;
       return true;
     }
     case MOD: {
-      Word *const aptr = in_prt(memory, instruction_pointer++);
-      Word b = out_ptr(memory, instruction_pointer++);
-      Word c = out_ptr(memory, instruction_pointer++);
-      *aptr = Word(b.to_uint() % c.to_uint()) ;
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      Word c = read(memory, instruction_pointer++);
+      *a = Word(b.to_uint() % c.to_uint()) ;
+      return true;
+    }
+    case AND: {
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      Word c = read(memory, instruction_pointer++);
+      *a = b & c;
+      return true;
+    }
+    case OR: {
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      Word c = read(memory, instruction_pointer++);
+      *a = b | c;
+      return true;
+    }
+    case NOT: {
+      Word *const a = write_prt(memory, instruction_pointer++);
+      Word b = read(memory, instruction_pointer++);
+      *a = ~b;
       return true;
     }
     case OUT: {
-      Word a = out_ptr(memory, instruction_pointer++);
+      Word a = read(memory, instruction_pointer++);
       assert(a < 256);
       terminal << static_cast<char>(a.to_uint());
       return true;

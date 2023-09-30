@@ -51,9 +51,7 @@ class Value {
            static_cast<std::uint32_t>(m_data[0]);
   }
 
-  constexpr bool nonzero() const noexcept {
-    return to_int() != 0;
-  }
+  constexpr bool nonzero() const noexcept { return to_int() != 0; }
 
   template <unsigned N>
   constexpr std::strong_ordering operator<=>(Value<N> other) const noexcept {
@@ -89,6 +87,28 @@ class Value {
     const auto ret = Value<15>(m_data);
     *this = Value((this->to_uint() + 1) % modulo);
     return ret;
+  }
+
+  friend Value operator&(Value left, Value right) noexcept {
+    return Value(std::array{
+        left.m_data[0] & right.m_data[0],
+        left.m_data[1] & right.m_data[1],
+    });
+  }
+
+  friend Value operator|(Value left, Value right) noexcept {
+    return Value(std::array{
+        left.m_data[0] | right.m_data[0],
+        left.m_data[1] | right.m_data[1],
+    });
+  }
+
+  // 15 byte inverse
+  Value operator~() const noexcept {
+    return Value(std::array{
+        ~m_data[0],
+        ~m_data[1] & std::byte(0x7fu),
+    });
   }
 };
 
