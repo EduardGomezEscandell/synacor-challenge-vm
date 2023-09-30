@@ -32,7 +32,6 @@ TEST_CASE("cpu") {
   CPU_SUBCASE("halt")
   CPU_SUBCASE("out")
   CPU_SUBCASE("set")
-  CPU_SUBCASE("add")
   CPU_SUBCASE("push-pop-register")
   CPU_SUBCASE("push-pop-memory")
   CPU_SUBCASE("eq")
@@ -40,4 +39,7 @@ TEST_CASE("cpu") {
   CPU_SUBCASE("jmp")
   CPU_SUBCASE("jt")
   CPU_SUBCASE("jf")
+  CPU_SUBCASE("add")
+  CPU_SUBCASE("mult")
+  CPU_SUBCASE("mod")
 }

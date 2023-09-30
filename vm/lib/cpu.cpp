@@ -110,6 +110,20 @@ bool CPU::Step() {
       *aptr = Word((b.to_uint() + c.to_uint()) % 0x8000u) ;
       return true;
     }
+    case MULT: {
+      Word *const aptr = in_prt(memory, instruction_pointer++);
+      Word b = out_ptr(memory, instruction_pointer++);
+      Word c = out_ptr(memory, instruction_pointer++);
+      *aptr = Word((b.to_uint() * c.to_uint()) % 0x8000u) ;
+      return true;
+    }
+    case MOD: {
+      Word *const aptr = in_prt(memory, instruction_pointer++);
+      Word b = out_ptr(memory, instruction_pointer++);
+      Word c = out_ptr(memory, instruction_pointer++);
+      *aptr = Word(b.to_uint() % c.to_uint()) ;
+      return true;
+    }
     case OUT: {
       Word a = out_ptr(memory, instruction_pointer++);
       assert(a < 256);
