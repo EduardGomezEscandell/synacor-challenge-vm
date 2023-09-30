@@ -37,5 +37,8 @@ validate 1 $code1
 code2=`grep 'this one into the challenge website:' "$tmp" | sed 's#^.*: \(.*\)$#\1#'`
 validate 2 $code2
 
-code3="Unknown!"
+code3=`grep 'The self-test completion code is:' "$tmp" | sed 's#^.*: \(.*\)$#\1#'`
 validate 3 $code3
+
+code4="Unknown!"
+validate 4 $code4
