@@ -1,0 +1,4 @@
+or result 0x139 0x312
+halt
+result:
+    0xfefe
