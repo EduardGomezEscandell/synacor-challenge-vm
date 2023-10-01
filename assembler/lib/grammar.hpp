@@ -15,6 +15,7 @@ enum class Symbol : int {
   I,
   D,
   W,
+  R,
 
   // Terminals
 
@@ -85,7 +86,8 @@ constexpr bool operator==(Token other) const noexcept {
   case Symbol::T:        \
   case Symbol::I:        \
   case Symbol::D:        \
-  case Symbol::W
+  case Symbol::W:        \
+  case Symbol::R
 
 #define CASE_TERMINAL             \
   case Symbol::END:               \

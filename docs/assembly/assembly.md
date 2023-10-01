@@ -56,17 +56,18 @@ Tokenization:
 | `T`              | Tag declaration |
 | `W`              | Word            |
 | `D`              | Raw data        |
+| `R`              | A register      |
 
-| **Terminal** | Matching token      | Explanation                    |
-| ------------ | ------------------- | ------------------------------ |
+| **Terminal** | Matching token      | Explanation                  |
+| ------------ | ------------------- | ---------------------------- |
 | `x`          | `NUMBER_LITERAL`    |
 | `c`          | `CHARACTER_LITERAL` |
 | `s`          | `STRING_LITERAL`    |
 | `r`          | `REGISTER`          |
-| `t`          | `TAG_DECL`          | declaration of a tag           |
-| `a`          | `TAG_REF`           | referencing a tag (a: address) |
-| `'jmp'`      | `VERB`              | verb with the specified name   |
-| `n`          | `EOL`               | end of line                    |
+| `t`          | `TAG_DECL`          | declaration of a tag         |
+| `a`          | `TAG_REF`           | referencing a tag            |
+| `'jmp'`      | `VERB`              | verb with the specified name |
+| `n`          | `EOL`               | end of line                  |
 
 
 ### Production rules
@@ -82,13 +83,34 @@ P → nP | TnP | InP | DnP | ε
 T → t
 
 # Line with an instruction
-I → 3WWW | 2WW | 1W | 0
+I → 'halt'
+I → 'set'RW
+I → 'push'W
+I → 'pop'R
+I → 'eq'RWW
+I → 'gt'RWW
+I → 'jmp'W
+I → 'jt'WW
+I → 'jf'WW
+I → 'add'RWW
+I → 'mult'RWW
+I → 'mod'RWW
+I → 'and'RWW
+I → 'or'RWW
+I → 'not'RW
+I → 'rmem'RW
+I → 'wmem'WW
+I → 'call'W
+I → 'ret'
+I → 'out'W
+I → 'in'R
+I → 'noop'
 
 # Line with raw data
 D → xD | cD | aD | rD | sD | ε
 
 # Single-word literals (plus references and registers)
-W → x | c | a | r
+W → x | c | r
 ```
 ### A caviat
 Note that this grammar is not truly LL(1): there is ambiguity in the presence of an emtpy line. The following program:
@@ -96,7 +118,7 @@ Note that this grammar is not truly LL(1): there is ambiguity in the presence of
 
 "this string literal sits under an empty line"
 ```
-Note that the tokenizer always appends a newline at the end of non-empty files. Hence, the previous text is tokenized into the following string:
+Note that the tokenizer always appends a newline at the end of non-empty files. Hence the previous text is tokenized into the following string:
 ```
 nsn
 ```
@@ -116,15 +138,7 @@ Hence, we default to the left tree.
 
 
 ## FIRST/FOLLOW table
-Let's first define a few sets for easier readability.
-```
-0 = { 'halt', 'ret', 'noop' }
-1 = { 'push', 'pop', 'jmp', 'call', 'out' , 'in' }
-2 = { 'set' , 'jt' , 'jf' , 'not' , 'rmem', 'wmem' }
-3 = { 'eq'  , 'gt' , 'add', 'mult', 'mod',  'and', 'or' }
-ω = 0 ∪ 1 ∪ 2 ∪ 3
-```
-Here is the resulting table:
+The set `ω` represents any verb. Here is the resulting table:
 
 | **Non-terminal** | **FIRST()**                    | **FOLLOW()**                |
 | ---------------- | ------------------------------ | --------------------------- |
@@ -134,15 +148,18 @@ Here is the resulting table:
 | I                | `ω`                            | `{n}`                       |
 | D                | `{x, c, a, r, s, ε}`           | `{x, c, a, r, s, n}`        |
 | W                | `{x, c, a, r}`                 | `{x, c, a, r, s, n}`        |
+| R                | `{r}`                          | `{x, c, a, r, s, n}`        |
 
 
 ### LL(1) table
+The set `ω` represents any verb. To avoid spamming the table, the rules for each verb are skipped.
 
-|     | `x`     | `c`     | `s`     | `r`     | `t`     | `a`     | `0`     | `1`     | `2`     | `3`      | `n`    | `$`   |
-| --- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | -------- | ------ | ----- |
-| `S` | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`   | `S→P$` |       |
-| `P` | `P→DnP` | `P→DnP` | `P→DnP` | `P→DnP` | `P→TnP` | `P→DnP` | `P→InP` | `P→InP` | `P→InP` | `P→InP`  | `P→nP` | `P→$` |
-| `T` |         |         |         |         | `T→t`   |         |         |         |         |          |        |       |
-| `I` |         |         |         |         |         |         | `I→0`   | `I→1W`  | `I→2WW` | `I→3WWW` |        |       |
-| `D` | `D→xD`  | `D→cD`  | `D→sD`  | `D→rD`  |         | `D→aD`  |         |         |         |          | `D→ε`  |       |
-| `W` | `W→x`   | `W→c`   |         | `W→r`   |         | `W→a`   |         |         |         |          |        |       |
+|     | `x`     | `c`     | `s`     | `r`     | `t`     | `a`     | `ω`      | `n`    | `$`   |
+| --- | ------- | ------- | ------- | ------- | ------- | ------- | -------- | ------ | ----- |
+| `S` | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`  | `S→P$`   | `S→P$` |       |
+| `P` | `P→DnP` | `P→DnP` | `P→DnP` | `P→DnP` | `P→TnP` | `P→DnP` | `P→InP`  | `P→nP` | `P→$` |
+| `T` |         |         |         |         | `T→t`   |         |          |        |       |
+| `I` |         |         |         |         |         |         | `I→ω...` |        |       |
+| `D` | `D→xD`  | `D→cD`  | `D→sD`  | `D→rD`  |         | `D→aD`  |          | `D→ε`  |       |
+| `W` | `W→x`   | `W→c`   |         | `W→r`   |         | `W→a`   |          |        |       |
+| `R` |         |         |         | `W→r`   |         |         |          |        |       |

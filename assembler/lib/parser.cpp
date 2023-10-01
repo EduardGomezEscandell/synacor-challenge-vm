@@ -2,6 +2,7 @@
 #include "parser.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <format>
 #include <initializer_list>
 #include <iterator>
@@ -20,6 +21,7 @@
 [[nodiscard]] bool rule_I(std::stack<Node*>& stack, Token const& input);
 [[nodiscard]] bool rule_D(std::stack<Node*>& stack, Token const& input);
 [[nodiscard]] bool rule_W(std::stack<Node*>& stack, Token const& input);
+[[nodiscard]] bool rule_R(std::stack<Node*>& stack, Token const& input);
 
 bool production_rule(std::stack<Node*>& stack, Token const& input) {
   auto const& top = *stack.top();
@@ -36,6 +38,8 @@ bool production_rule(std::stack<Node*>& stack, Token const& input) {
       return rule_D(stack, input);
     case Symbol::W:
       return rule_W(stack, input);
+    case Symbol::R:
+      return rule_R(stack, input);
     CASE_TERMINAL:
       std::cerr << std::format("{}: parsing error: unexpected token {}\n",
                                input.location(), input.fmt());
@@ -133,18 +137,80 @@ bool rule_T(std::stack<Node*>& stack, Token const& input) {
   return false;
 }
 
+bool rule_I_to_Verb(std::stack<Node*>& stack, Token const& verb) {
+  [[maybe_unused]] const auto& top = *stack.top();
+  assert(top.token.symbol == Symbol::I);
+  assert(verb.symbol == Symbol::VERB);
+
+  switch (static_cast<Verb>(verb.as_opcode())) {
+    case HALT:
+      apply_production_rule(stack, {verb});
+      return true;
+    case SET:
+      apply_production_rule(stack, {verb, Symbol::R, Symbol::W});
+      return true;
+    case PUSH:
+      apply_production_rule(stack, {verb, Symbol::W});
+      return true;
+    case POP:
+      apply_production_rule(stack, {verb, Symbol::R});
+      return true;
+    case EQ:
+    case GT:
+      apply_production_rule(stack, {verb, Symbol::R, Symbol::W, Symbol::W});
+      return true;
+    case JMP:
+      apply_production_rule(stack, {verb, Symbol::W});
+      return true;
+    case JT:
+    case JF:
+      apply_production_rule(stack, {verb, Symbol::W, Symbol::W});
+      return true;
+    case ADD:
+    case MULT:
+    case MOD:
+    case AND:
+    case OR:
+      apply_production_rule(stack, {verb, Symbol::R, Symbol::W, Symbol::W});
+      return true;
+    case NOT:
+      apply_production_rule(stack, {verb, Symbol::R, Symbol::W});
+      return true;
+    case RMEM:
+      apply_production_rule(stack, {verb, Symbol::R, Symbol::W});
+      return true;
+    case WMEM:
+      apply_production_rule(stack, {verb, Symbol::W, Symbol::W});
+      return true;
+    case CALL:
+      apply_production_rule(stack, {verb, Symbol::W});
+      return true;
+    case RET:
+      apply_production_rule(stack, {verb});
+      return true;
+    case OUT:
+      apply_production_rule(stack, {verb, Symbol::W});
+      return true;
+    case IN:
+      apply_production_rule(stack, {verb, Symbol::R});
+      return true;
+    case NOOP:
+      apply_production_rule(stack, {verb});
+      return true;
+    case ERROR:
+      break;
+  }
+  assert(0);
+  return false;
+}
+
 bool rule_I(std::stack<Node*>& stack, Token const& input) {
   [[maybe_unused]] const auto& top = *stack.top();
   assert(top.token.symbol == Symbol::I);
 
   switch (input.symbol) {
-    case Symbol::VERB: {
-      const auto argc = arch::argument_count(input.as_opcode());
-      std::vector<Token> w{input};
-      w.resize(1 + std::size_t(argc), {Symbol::W});
-      apply_production_rule(stack, w);
-      return true;
-    }
+    case Symbol::VERB:
+      return rule_I_to_Verb(stack, input);
     case Symbol::END:
     case Symbol::NUMBER_LITERAL:
     case Symbol::CHARACTER_LITERAL:
@@ -204,6 +270,32 @@ bool rule_W(std::stack<Node*>& stack, Token const& input) {
     case Symbol::TAG_REF:
       apply_production_rule(stack, {input});
       return true;
+    case Symbol::STRING_LITERAL:
+    case Symbol::TAG_DECL:
+    case Symbol::VERB:
+    case Symbol::EOL:
+    CASE_NONTERMINAL:
+      // Bad grammar
+      return false;
+    CASE_ERRONEOUS:
+      break;
+  }
+  assert(0);
+  return false;
+}
+
+bool rule_R(std::stack<Node*>& stack, Token const& input) {
+  [[maybe_unused]] const auto& top = *stack.top();
+  assert(top.token.symbol == Symbol::R);
+
+  switch (input.symbol) {
+    case Symbol::REGISTER:
+      apply_production_rule(stack, {input});
+      return true;
+    case Symbol::END:
+    case Symbol::NUMBER_LITERAL:
+    case Symbol::CHARACTER_LITERAL:
+    case Symbol::TAG_REF:
     case Symbol::STRING_LITERAL:
     case Symbol::TAG_DECL:
     case Symbol::VERB:

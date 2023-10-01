@@ -25,6 +25,8 @@ std::string Token::fmt() const {
       return "<D>";
     case Symbol::W:
       return "<W>";
+    case Symbol::R:
+      return "<R>";
     // Terminals
     case Symbol::NUMBER_LITERAL:
       return std::format("<NUMBER {}>", as_number());

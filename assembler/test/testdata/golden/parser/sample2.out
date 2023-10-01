@@ -2,7 +2,7 @@
   <P>
     <I>
       <VERB set>
-      <W>
+      <R>
         <REGISTER 0>
       <W>
         <TAG_REF text>
@@ -14,7 +14,7 @@
       <P>
         <I>
           <VERB rmem>
-          <W>
+          <R>
             <REGISTER 8>
           <W>
             <REGISTER 0>
@@ -28,7 +28,7 @@
           <P>
             <I>
               <VERB add>
-              <W>
+              <R>
                 <REGISTER 0>
               <W>
                 <REGISTER 0>
@@ -38,7 +38,7 @@
             <P>
               <I>
                 <VERB eq>
-                <W>
+                <R>
                   <REGISTER 1>
                 <W>
                   <REGISTER 0>
