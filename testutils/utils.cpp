@@ -100,7 +100,7 @@ void check_golden(std::string_view test_name, std::string_view got) {
     }
   }
 
-  CHECK_EQ(want, got);
+  REQUIRE_EQ(want, got);
 }
 
 void check_golden_binary(std::string_view test_name,
