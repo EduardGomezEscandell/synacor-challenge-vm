@@ -84,30 +84,30 @@ generator generate_without_references(Node const &root) {
     }
 
     switch (curr->token.symbol) {
-    case Symbol::END:
-      return g;
-    case Symbol::EOL:
-      g.process_endline(curr);
-      break;
-    case Symbol::TAG_DECL:
-      g.process_tag_declaration(curr);
-      break;
-    case Symbol::TAG_REF:
-      g.process_reference(curr);
-      break;
-    case Symbol::NUMBER_LITERAL:
-    case Symbol::CHARACTER_LITERAL:
-    case Symbol::STRING_LITERAL:
-    case Symbol::REGISTER:
-    case Symbol::VERB:
-      g.generate_literal(curr);
-      break;
-    CASE_NONTERMINAL:
-      g.process_nonterminal(stack, curr);
-      break;
-    CASE_ERRONEOUS:
-      throw std::runtime_error(
-          std::format("AST contains error token {}", curr->token.fmt()));
+      case Symbol::END:
+        return g;
+      case Symbol::EOL:
+        g.process_endline(curr);
+        break;
+      case Symbol::TAG_DECL:
+        g.process_tag_declaration(curr);
+        break;
+      case Symbol::TAG_REF:
+        g.process_reference(curr);
+        break;
+      case Symbol::NUMBER_LITERAL:
+      case Symbol::CHARACTER_LITERAL:
+      case Symbol::STRING_LITERAL:
+      case Symbol::REGISTER:
+      case Symbol::VERB:
+        g.generate_literal(curr);
+        break;
+      CASE_NONTERMINAL:
+        g.process_nonterminal(stack, curr);
+        break;
+      CASE_ERRONEOUS:
+        throw std::runtime_error(
+            std::format("AST contains error token {}", curr->token.fmt()));
     }
   }
 }
@@ -122,9 +122,9 @@ bytestr replace_references(generator &g) {
     std::string_view name = kv.first;
     reference const &ref = kv.second;
     if (ref.declaration == nullptr) {
-      throw std::runtime_error(std::format("{}: code generation error: reference {} is undefined.",
-                                           ref.first_usage->token.location(),
-                                           name));
+      throw std::runtime_error(
+          std::format("{}: code generation error: reference {} is undefined.",
+                      ref.first_usage->token.location(), name));
     }
 
     if (ref.locations.empty()) {

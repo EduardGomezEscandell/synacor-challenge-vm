@@ -21,4 +21,4 @@ struct CPU {
   Number instruction_pointer = Number(0);
 };
 
-} // namespace SynacorVM
+}  // namespace SynacorVM

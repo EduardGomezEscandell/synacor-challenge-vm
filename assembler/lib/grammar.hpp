@@ -34,7 +34,6 @@ enum class Symbol : int {
   TAG_REF,
   VERB,
 
-
   // Temporary symbols used in parsing
   NONE = 0,
   UNKNOWN_IDENTIFIER,  // Identifier, not yet known what type
@@ -42,18 +41,18 @@ enum class Symbol : int {
 };
 
 struct Token {
-  constexpr Token(Symbol symbol = Symbol::NONE, std::vector<std::byte> data = {}) :
-    symbol{symbol}, data{data}
-  {}
+  constexpr Token(Symbol symbol = Symbol::NONE,
+                  std::vector<std::byte> data = {})
+      : symbol{symbol}, data{data} {}
 
-  void set_location(std::string_view file, unsigned row, unsigned col) noexcept{
+  void set_location(std::string_view file, unsigned row,
+                    unsigned col) noexcept {
     this->m_file = file;
     this->m_row = row;
     this->m_col = col;
   }
 
-
-constexpr bool operator==(Token other) const noexcept {
+  constexpr bool operator==(Token other) const noexcept {
     return symbol == other.symbol && data == other.data;
   }
 
@@ -69,10 +68,10 @@ constexpr bool operator==(Token other) const noexcept {
   Symbol symbol;
   std::vector<std::byte> data = {};
 
-  private:
-    std::string m_file;
-    unsigned m_row;
-    unsigned m_col;
+ private:
+  std::string m_file;
+  unsigned m_row;
+  unsigned m_col;
 };
 
 #define CASE_ERRONEOUS             \

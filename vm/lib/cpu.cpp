@@ -18,9 +18,9 @@ Word &get_register(Memory &m, Number ptr) {
 
   int p = static_cast<int>(v.to_uint()) - static_cast<int>(Memory::heap_size);
   if (p < 0 || unsigned(p) > Memory::register_count) {
-    throw std::runtime_error(
-        std::format("Attempted to access non-existing register with code {:04x}",
-                    v.to_uint()));
+    throw std::runtime_error(std::format(
+        "Attempted to access non-existing register with code {:04x}",
+        v.to_uint()));
   }
 
   return m[v];
@@ -149,7 +149,7 @@ bool CPU::Step() {
       return true;
     }
     case RMEM: {
-      Word& regA = get_register(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const ptr = value_or_register(memory, instruction_pointer++);
       regA = memory[ptr];
       return true;
@@ -181,7 +181,7 @@ bool CPU::Step() {
       return true;
     }
     case IN: {
-      Word& regA = get_register(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       regA = Word(stdIn.get());
       return true;
     }

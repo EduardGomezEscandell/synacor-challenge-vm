@@ -1,11 +1,11 @@
 #pragma once
 
-#include "arch/arch.hpp"
-#include "grammar.hpp"
-
-#include <vector>
 #include <iosfwd>
 #include <string>
+#include <vector>
+
+#include "arch/arch.hpp"
+#include "grammar.hpp"
 
 namespace {
 
@@ -13,10 +13,10 @@ struct TokenParser {
   std::string_view file_name;
   unsigned row = 1;
   unsigned col = 1;
-  
+
   unsigned start_row = 1;
   unsigned start_col = 1;
-  
+
   int len = 0;
   Symbol type = Symbol::NONE;
 
@@ -61,4 +61,5 @@ struct TokenParser {
 
 std::pair<std::vector<Token>, bool> tokenize(std::string file_name);
 
-std::ostream& fmt_tokens(std::ostream& out, std::vector<Token> const& tokenized);
+std::ostream& fmt_tokens(std::ostream& out,
+                         std::vector<Token> const& tokenized);

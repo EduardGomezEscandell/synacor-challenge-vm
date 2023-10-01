@@ -1,7 +1,8 @@
-#include "grammar.hpp"
-#include "parser.hpp"
 #include <memory>
 #include <ostream>
+
+#include "grammar.hpp"
+#include "parser.hpp"
 
 using bytestr = std::basic_string<std::byte>;
 

@@ -39,9 +39,10 @@ void apply_production_rule(std::stack<Node*>& stack, Iterable replace) {
   // Adding new symbols as children of popped symbol
   top->children.reserve(top->children.size() + replace.size());
   const auto rend = top->children.rbegin();
-  std::transform(
-      replace.begin(), replace.end(), std::back_inserter(top->children),
-      [](Token const& token) { return std::make_unique<Node>(Node{.token = token}); });
+  std::transform(replace.begin(), replace.end(),
+                 std::back_inserter(top->children), [](Token const& token) {
+                   return std::make_unique<Node>(Node{.token = token});
+                 });
   const auto rbegin = top->children.rbegin();
 
   // Adding new symbols to stack (in reverse)
@@ -78,8 +79,8 @@ std::pair<Node, bool> parse(TokenForwardIterator auto begin,
 
   if (!ok) {
     const Token t = *it;
-    std::cerr << std::format(
-        "{}: parsing error: unexpected token {}\n", t.location(), t.fmt());
+    std::cerr << std::format("{}: parsing error: unexpected token {}\n",
+                             t.location(), t.fmt());
     return {std::move(root), false};
   }
 

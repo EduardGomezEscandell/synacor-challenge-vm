@@ -39,8 +39,8 @@ class Memory {
       return m_registers[i];
     }
 
-    throw std::runtime_error(
-        std::format("Attempted to access inexistent address {:0x}", idx.to_uint()));
+    throw std::runtime_error(std::format(
+        "Attempted to access inexistent address {:0x}", idx.to_uint()));
   }
 
   Word operator[](Word idx) const {

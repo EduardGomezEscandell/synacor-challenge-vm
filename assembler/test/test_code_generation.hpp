@@ -31,17 +31,16 @@ inline void test_code_generation(std::string_view test_name,
   testutils::check_golden_binary(test_name, bytecode);
 }
 
+#define SUBCASE_CG(name, wantSuccess) \
+  SUBCASE(name) { test_code_generation("code_generation/" name, wantSuccess); }
+
 TEST_CASE("code_generation") {
-  SUBCASE("empty") { test_code_generation("code_generation/empty", true); }
-  SUBCASE("endline") { test_code_generation("code_generation/endline", true); }
-  SUBCASE("tag") { test_code_generation("code_generation/tag", true); }
-  SUBCASE("instruction") {
-    test_code_generation("code_generation/instruction", true);
-  }
-  SUBCASE("numbers") { test_code_generation("code_generation/numbers", true); }
-  SUBCASE("sample") { test_code_generation("code_generation/sample", true); }
-  SUBCASE("sample2") { test_code_generation("code_generation/sample2", true); }
-  SUBCASE("undefined_ref") {
-    test_code_generation("code_generation/undefined_ref", false);
-  }
+  SUBCASE_CG("empty", true)
+  SUBCASE_CG("endline", true)
+  SUBCASE_CG("tag", true)
+  SUBCASE_CG("instruction", true)
+  SUBCASE_CG("numbers", true)
+  SUBCASE_CG("sample", true)
+  SUBCASE_CG("sample2", true)
+  SUBCASE_CG("undefined_ref", false);
 }

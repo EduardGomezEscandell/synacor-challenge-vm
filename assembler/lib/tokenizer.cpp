@@ -18,13 +18,13 @@ std::vector<std::byte> str_to_bytes(std::string str);
 constexpr std::optional<char> escape(char ch);
 
 std::pair<std::vector<Token>, bool> tokenize(std::string file_name) {
-  if(!std::filesystem::exists(file_name)) {
+  if (!std::filesystem::exists(file_name)) {
     std::cerr << std::format("File {} does not exist\n", file_name);
     return {{}, false};
   }
 
   std::ifstream f(file_name.c_str(), std::ios::binary);
-  if(!f.good()) {
+  if (!f.good()) {
     std::cerr << std::format("Could not open file {}\n", file_name);
     return {{}, false};
   }
@@ -411,12 +411,12 @@ void TokenParser::clear() {
 Token TokenParser::finalize_NUMBER() {
   assert(value <= 0xffff);
   return {Symbol::NUMBER_LITERAL,
-          {std::byte(value & 0xff), std::byte((value & 0xff00)>>8)}};
+          {std::byte(value & 0xff), std::byte((value & 0xff00) >> 8)}};
 }
 
 Token TokenParser::finalize_CHARACTER() {
   return {Symbol::CHARACTER_LITERAL,
-          {std::byte(value & 0xff), std::byte((value & 0xff00)>>8)}};
+          {std::byte(value & 0xff), std::byte((value & 0xff00) >> 8)}};
 }
 
 Token TokenParser::finalize_STRING() {

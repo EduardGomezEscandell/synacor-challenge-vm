@@ -2,8 +2,8 @@
 
 #include <doctest/doctest.h>
 
-#include <sstream>
 #include <fstream>
+#include <sstream>
 
 #include "lib/tokenizer.hpp"
 #include "testutils/utils.hpp"
@@ -12,7 +12,7 @@ inline void test_tokenizer(std::string_view test_name, bool want_success) {
   auto lock = SET_TEST_DIR();
 
   const auto [got, ok] = tokenize(testutils::fixture_path(test_name));
-  if(want_success) {
+  if (want_success) {
     REQUIRE(ok);
   } else {
     REQUIRE_FALSE(ok);

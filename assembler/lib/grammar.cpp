@@ -5,7 +5,7 @@
 #include <string>
 
 std::string Token::location() const {
-    return std::format("{}:{}:{}", m_file, m_row, m_col);
+  return std::format("{}:{}:{}", m_file, m_row, m_col);
 }
 
 std::string Token::fmt() const {
@@ -43,8 +43,7 @@ std::string Token::fmt() const {
     case Symbol::TAG_REF:
       return std::format("<TAG_REF {}>", as_str());
     case Symbol::VERB:
-      return std::format("<VERB {}>",
-                         arch::to_string(as_opcode()));
+      return std::format("<VERB {}>", arch::to_string(as_opcode()));
     // Special tokens
     case Symbol::NONE:
       return "{NONE}";
