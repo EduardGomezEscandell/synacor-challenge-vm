@@ -1,5 +1,6 @@
 set r0 0xfff
-mult output r0 150
+mult r1 r0 150
+wmem data r1
 halt
-output:
-    0xbabe
+data:
+    0xffff

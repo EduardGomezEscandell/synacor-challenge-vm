@@ -1,11 +1,11 @@
-gt result1 50 1000
-gt result2 50 50
-gt result3 1000 50
-halt
+gt r1 50 1000
+gt r2 50 50
+gt r3 1000 50
 
-result1:
-    0xface
-result2:
-    0xfeed
-result3:
-    0xdead
+add r1 r1 'A'
+add r2 r2 'A'
+add r3 r3 'A'
+
+out r1
+out r2
+out r3

@@ -1,5 +1,5 @@
 set r0 73
-mod output r0 5
-halt
-output:
-    0xfada
+mod r0 r0 5
+
+add r0 r0 'A'
+out r0
