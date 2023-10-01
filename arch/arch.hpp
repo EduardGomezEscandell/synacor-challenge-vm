@@ -5,29 +5,41 @@
 #include <string_view>
 
 enum Verb : std::int32_t {
-  HALT,
-  SET,
-  PUSH,
-  POP,
-  EQ,
-  GT,
-  JMP,
-  JT,
-  JF,
-  ADD,
-  MULT,
-  MOD,
-  AND,
-  OR,
-  NOT,
-  RMEM,
-  WMEM,
-  CALL,
-  RET,
-  OUT,
-  IN,
-  NOOP,
-  ERROR,
+  HALT,  // `halt`:   stop execution and terminate the program
+  SET,   // `set a b`:   set register `a` to the value of `b`
+  PUSH,  // `push a`:   push `a` onto the stack
+  POP,   // `pop a`:   remove the top element from the stack and write it into
+         // `a`; empty stack = error
+  EQ,    // `eq a b c`:   set `a` to 1 if `b` is equal to `c`; set it to 0
+         // otherwise
+  GT,    // `gt a b c`:   set `a` to 1 if `b` is greater than `c`; set it to 0
+         // otherwise
+  JMP,   // `jmp a`:   jump to `a`
+  JT,    // `jt a b`:   if `a` is nonzero, jump to `b`
+  JF,    // `jf a b`:   if `a` is zero, jump to `b`
+  ADD,   // `add a b c`:   assign into `a` the sum of `b` and `c` (modulo 32768)
+  MULT,  // `mult a b c`:   store into `a` the product of `b` and `c` (modulo
+         // 32768)
+  MOD,   // `mod a b c`:   store into `a` the remainder of `b` divided by `c`
+  AND,   // `and a b c`:   stores into `a` the bitwise and of `b` and `c`
+  OR,    // `or a b c`:   stores into `a` the bitwise or of `b` and `c`
+  NOT,   // `not a b`:   stores 15-bit bitwise inverse of `b` in `a`
+  RMEM,  // `rmem a b`:   read memory at address `b` and write it to `a`
+  WMEM,  // `wmem a b`:   write the value from `b` into memory at address `a`
+  CALL,  // `call a`:   write the address of the next instruction to the stack
+         // and jump to `a`
+  RET,   // `ret`:   remove the top element from the stack and jump to it; empty
+         // stack = halt
+  OUT,   // `out a`:   write the character represented by ascii code `a` to the
+         // terminal
+  IN,  // `in a`:   read a character from the terminal and write its ascii code
+       // to `a`; it can be assumed that once input starts, it will continue
+       // until a newline is encountered; this means that you can safely read
+       // whole lines from the keyboard instead of having to figure out how to
+       // read individual characters
+  NOOP,  // `noop`:   no operation
+
+  ERROR,  // `error`: Erroneus instruction. Will immediately halt execution.
 };
 
 namespace arch {
