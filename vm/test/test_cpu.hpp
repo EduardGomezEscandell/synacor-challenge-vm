@@ -24,9 +24,9 @@ inline void test_cpu(std::string_view test_name) {
 
   vm.Run();
 
+  testutils::check_golden(std::format("{}/stdout", test_name), out.str());
   testutils::check_golden_binary(std::format("{}/memory", test_name),
                                  ram.dump());
-  testutils::check_golden(std::format("{}/stdout", test_name), out.str());
 }
 
 #define CPU_SUBCASE(name) \
@@ -36,7 +36,6 @@ TEST_CASE("cpu") {
   CPU_SUBCASE("halt")
   CPU_SUBCASE("set")
   CPU_SUBCASE("push-pop-register")
-  CPU_SUBCASE("push-pop-memory")
   CPU_SUBCASE("eq")
   CPU_SUBCASE("gt")
   CPU_SUBCASE("jmp")

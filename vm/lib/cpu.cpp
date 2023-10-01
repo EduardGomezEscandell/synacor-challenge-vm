@@ -8,20 +8,32 @@
 #include <string_view>
 
 #include "arch/arch.hpp"
+#include "vm/lib/memory.hpp"
+#include "vm/lib/word.hpp"
 
 namespace SynacorVM {
 
-Word *write_ptr(Memory &m, Number ptr) {
+Word &get_register(Memory &m, Number ptr) {
   const Word v = m[ptr];
-  return &m[v];
+
+  int p = static_cast<int>(v.to_uint()) - static_cast<int>(Memory::heap_size);
+  if (p < 0 || unsigned(p) > Memory::register_count) {
+    throw std::runtime_error(
+        std::format("Attempted to access non-existing register with code {:04x}",
+                    v.to_uint()));
+  }
+
+  return m[v];
 }
 
 Word value_or_register(Memory &m, Number ptr) {
   const Word v = m[ptr];
   if (v < Memory::heap_size) {
+    // Number literal
     return v;
   }
 
+  // Register
   return m[v];
 }
 
@@ -40,9 +52,9 @@ bool CPU::Step() {
     case HALT:
       return false;
     case SET: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
-      *a = b;
+      regA = b;
       return true;
     }
     case PUSH: {
@@ -51,25 +63,25 @@ bool CPU::Step() {
       return true;
     }
     case POP: {
-      Word *const ptr = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       if (memory.stack_ptr() == 0) {
         throw std::runtime_error("Called POP with an empty stack");
       }
-      *ptr = memory.pop();
+      regA = memory.pop();
       return true;
     }
     case EQ: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
-      *a = (b == c) ? Word(1) : Word(0);
+      regA = (b == c) ? Word(1) : Word(0);
       return true;
     }
     case GT: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
-      *a = (b > c) ? Word(1) : Word(0);
+      regA = (b > c) ? Word(1) : Word(0);
       return true;
     }
     case JMP: {
@@ -96,50 +108,50 @@ bool CPU::Step() {
       return true;
     }
     case ADD: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
-      *a = Word((b.to_uint() + c.to_uint()) % 0x8000u);
+      regA = Word((b.to_uint() + c.to_uint()) % 0x8000u);
       return true;
     }
     case MULT: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
-      *a = Word((b.to_uint() * c.to_uint()) % 0x8000u);
+      regA = Word((b.to_uint() * c.to_uint()) % 0x8000u);
       return true;
     }
     case MOD: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
-      *a = Word(b.to_uint() % c.to_uint());
+      regA = Word(b.to_uint() % c.to_uint());
       return true;
     }
     case AND: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
-      *a = b & c;
+      regA = b & c;
       return true;
     }
     case OR: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
       Word const c = value_or_register(memory, instruction_pointer++);
-      *a = b | c;
+      regA = b | c;
       return true;
     }
     case NOT: {
-      Word *const a = write_ptr(memory, instruction_pointer++);
+      Word &regA = get_register(memory, instruction_pointer++);
       Word const b = value_or_register(memory, instruction_pointer++);
-      *a = ~b;
+      regA = ~b;
       return true;
     }
     case RMEM: {
-      Word *const dst = write_ptr(memory, instruction_pointer++);
+      Word& regA = get_register(memory, instruction_pointer++);
       Word const ptr = value_or_register(memory, instruction_pointer++);
-      *dst = memory[ptr];
+      regA = memory[ptr];
       return true;
     }
     case WMEM: {
@@ -155,7 +167,7 @@ bool CPU::Step() {
       return true;
     }
     case RET: {
-      if(memory.stack_ptr() == 0) {
+      if (memory.stack_ptr() == 0) {
         return false;
       }
       Word const pos = memory.pop();
@@ -169,8 +181,8 @@ bool CPU::Step() {
       return true;
     }
     case IN: {
-      Word *const dst = write_ptr(memory, instruction_pointer++);
-      *dst = Word(stdIn.get());
+      Word& regA = get_register(memory, instruction_pointer++);
+      regA = Word(stdIn.get());
       return true;
     }
     case NOOP:
