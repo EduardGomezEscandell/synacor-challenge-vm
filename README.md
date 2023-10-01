@@ -17,10 +17,10 @@ The executables will land in the `build` folder. If you want more control over t
 - `BUILD_TESTS`: Either `1` or empty. Default: empty.
 
 ## Assemble a program
-In order to assemble, for example [hello-world.as](./programs/hello-world.as):
+In order to assemble, for example [hello-world.as](./example-programs/hello-world.as):
 ```bash
 ./build/Release/assembler/cmd/assemble  \
-    programs/hello-world.as             \
+    example-programs/hello-world.as     \
     hello-world.syn
 ```
 
