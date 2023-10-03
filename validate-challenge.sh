@@ -31,6 +31,21 @@ tmp=$(mktemp)
 
 cin="take tablet
 use tablet
+doorway
+north
+north
+bridge
+continue
+down
+east
+take empty lantern
+west
+west
+passage
+ladder
+west
+south
+north
 "
 
 ( ./build/Release/vm/cmd/runvm docs/spec/challenge <<< ${cin} ) | tee "$tmp" &
@@ -60,5 +75,8 @@ validate 3 "${code3}"
 code4=`grep " on the tablet.  Perhaps it's some kind of code?" "$tmp" | sed 's#^[^"]\+"\(\w\+\)".*$#\1#'`
 validate 4 "${code4}"
 
-code5="We don't know yet"
+code5=`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`
 validate 5 "${code5}"
+
+code6="No idea"
+validate 6 "${code6}"
