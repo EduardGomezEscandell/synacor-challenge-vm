@@ -77,14 +77,36 @@ func explore(seed int64) (execCount int, codes []string, err error) {
 	cmd.Stdout = &outBuffer
 	cmd.Stderr = &errBuffer
 
-	w, err := cmd.StdinPipe()
+	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return execCount, codes, err
 	}
-	defer w.Close()
+	defer stdin.Close()
 
-	fmt.Fprintln(w, "take tablet")
-	fmt.Fprintln(w, "use tablet")
+	stepsf, err := os.Create(fmt.Sprintf("results/%d.steps", seed))
+	if err != nil {
+		return execCount, codes, err
+	}
+	defer stepsf.Close()
+
+	start := `take tablet
+use tablet
+doorway
+north
+north
+bridge
+continue
+down
+east
+take empty lantern
+west
+west
+passage
+ladder`
+
+	fmt.Fprintln(stdin, start)
+	fmt.Fprintln(stepsf, start)
+
 	if err := cmd.Start(); err != nil {
 		return execCount, codes, fmt.Errorf("Could not start: %v", err)
 	}
@@ -105,8 +127,8 @@ loop:
 
 		answ, ok := select_answer(src, outBuffer.String())
 		if ok {
-			// fmt.Fprintln(&outBuffer, answ)
-			fmt.Fprintln(w, answ)
+			fmt.Fprintln(stepsf, answ)
+			fmt.Fprintln(stdin, answ)
 		}
 	}
 
