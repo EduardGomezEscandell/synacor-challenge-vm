@@ -18,18 +18,23 @@
 namespace SynacorVM {
 
 class Memory {
- public:
+public:
+  Memory() {
+    std::ranges::fill(m_registers, Word(0));
+    std::ranges::fill(m_heap, Word(0));
+  }
+
   constexpr static unsigned register_count = 8;
   constexpr static unsigned heap_size = 1 << 15;
 
- private:
+private:
   std::array<Word, register_count> m_registers;
   std::array<Word, heap_size> m_heap;
   std::stack<Word> m_stack;
 
   friend struct execution_state;
 
- public:
+public:
   Word &operator[](Word idx) {
     auto i = idx.to_uint();
     if (i < heap_size) {
@@ -86,4 +91,4 @@ class Memory {
   }
 };
 
-}  // namespace SynacorVM
+} // namespace SynacorVM
