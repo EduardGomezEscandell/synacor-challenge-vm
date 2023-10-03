@@ -15,13 +15,13 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const duration = 10 * time.Second
+const duration = 3 * time.Second
 
 func main() {
-	ch := make(chan result)
-	const n = 50
+	const N = 100
+	ch := make(chan result, N)
 
-	for i := 0; i < n; i++ {
+	for i := 0; i < N; i++ {
 		seed := rand.Int63()
 		go func() {
 			seed := seed
@@ -30,8 +30,8 @@ func main() {
 		}()
 	}
 
-	results := make([]result, n)
-	for i := 0; i < n; i++ {
+	results := make([]result, 0, N)
+	for i := 0; i < N; i++ {
 		results = append(results, <-ch)
 	}
 	close(ch)
@@ -102,7 +102,15 @@ take empty lantern
 west
 west
 passage
-ladder`
+ladder
+west
+south
+north
+take can
+look can
+use can
+
+west`
 
 	fmt.Fprintln(stdin, start)
 	fmt.Fprintln(stepsf, start)
@@ -159,18 +167,12 @@ loop:
 		}
 		// Finding unique entries
 		for _, m := range match {
-			d[m[1]] += 1
-		}
-		for k, v := range d {
-			if v == 1 {
+			candidate := m[1]
+			if d[candidate] != 0 {
 				continue
 			}
-			delete(d, k)
-		}
-		for _, m := range match {
-			if _, ok := d[m[1]]; ok {
-				codes = append(codes, m[1])
-			}
+			codes = append(codes, candidate)
+			d[candidate] += 1
 		}
 	}
 
