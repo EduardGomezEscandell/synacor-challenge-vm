@@ -109,8 +109,38 @@ north
 take can
 look can
 use can
-
-west`
+west
+ladder
+darkness
+use lantern
+continue
+west
+west
+west
+west
+north
+take red coin
+north
+west
+take blue coin
+up
+take shiny coin
+down
+east
+east
+take concave coin
+down
+take corroded coin
+up
+west
+use blue coin
+use red coin
+use shiny coin
+use concave coin
+use corroded coin
+north
+take teleporter
+use teleporter`
 
 	fmt.Fprintln(stdin, start)
 	fmt.Fprintln(stepsf, start)
@@ -164,6 +194,14 @@ loop:
 			// Known collisions
 			"dramatically": 1,
 			"instructions": 1,
+			"Headquarters": 1,
+			"Introduction": 1,
+			"fundamentals": 1,
+			"mathematical": 1,
+			"interactions": 1,
+			"hypothetical": 1,
+			"destinations": 1,
+			"confirmation": 1,
 		}
 		// Finding unique entries
 		for _, m := range match {

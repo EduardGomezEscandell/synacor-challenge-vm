@@ -46,6 +46,41 @@ ladder
 west
 south
 north
+take can
+look can
+use can
+west
+ladder
+darkness
+use lantern
+continue
+west
+west
+west
+west
+north
+take red coin
+north
+west
+take blue coin
+up
+take shiny coin
+down
+east
+east
+take concave coin
+down
+take corroded coin
+up
+west
+use blue coin
+use red coin
+use shiny coin
+use concave coin
+use corroded coin
+north
+take teleporter
+use teleporter
 "
 
 ( ./build/Release/vm/cmd/runvm docs/spec/challenge <<< ${cin} ) | tee "$tmp" &
@@ -75,8 +110,9 @@ validate 3 "${code3}"
 code4=`grep " on the tablet.  Perhaps it's some kind of code?" "$tmp" | sed 's#^[^"]\+"\(\w\+\)".*$#\1#'`
 validate 4 "${code4}"
 
-code5=`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`
-validate 5 "${code5}"
+codes56=(`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`)
+validate 5 "${codes56[0]}"
+validate 6 "${codes56[1]}"
 
-code6="No idea"
-validate 6 "${code6}"
+code7="No idea"
+validate 7 "${code7}"
