@@ -27,6 +27,8 @@ class Memory {
   std::array<Word, heap_size> m_heap;
   std::stack<Word> m_stack;
 
+  friend struct execution_state;
+
  public:
   Word &operator[](Word idx) {
     auto i = idx.to_uint();
