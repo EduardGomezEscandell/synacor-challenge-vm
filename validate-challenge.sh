@@ -28,10 +28,15 @@ validate() {
 }
 
 tmp=$(mktemp)
-./build/Release/vm/cmd/runvm docs/spec/challenge | tee "$tmp" &
+
+cin="take tablet
+use tablet
+"
+
+( ./build/Release/vm/cmd/runvm docs/spec/challenge <<< ${cin} ) | tee "$tmp" &
 
 # Keep it running for 5 seconds, then kill the process
-sleep 5
+sleep 1
 pid=$(ps -C 'runvm' -o pid --no-headers)
 [ -z "${pid}" ] || {
     echo "---"
@@ -51,5 +56,9 @@ validate 2 "${code2}"
 code3=`grep 'The self-test completion code is:' "$tmp" | sed 's#^.*: \(.*\)$#\1#'`
 validate 3 "${code3}"
 
-code4="Unknown!"
+
+code4=`grep " on the tablet.  Perhaps it's some kind of code?" "$tmp" | sed 's#^[^"]\+"\(\w\+\)".*$#\1#'`
 validate 4 "${code4}"
+
+code5="We don't know yet"
+validate 5 "${code5}"
