@@ -5,6 +5,7 @@
 #include <istream>
 #include <ostream>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 
 #include "arch/arch.hpp"
@@ -177,12 +178,21 @@ bool CPU::Step() {
   case OUT: {
     Word const a = value_or_register(memory, instruction_pointer++);
     assert(a < 256);
-    stdOut << static_cast<char>(a.to_uint());
+    const auto ch = static_cast<char>(a.to_uint());
+    if(ch == '\n') {
+      *stdOut << std::endl;
+    } else {
+      *stdOut << ch;
+    }
     return true;
   }
   case IN: {
     Word &regA = get_register(memory, instruction_pointer++);
-    regA = Word(stdIn.get());
+    auto w = stdIn->get();
+    if(w == std::char_traits<char>::eof()) {
+      throw std::runtime_error("could not read from stdin");
+    }
+    regA = Word(w);
     return true;
   }
   case NOOP:
@@ -209,9 +219,9 @@ void CPU::Run() noexcept {
       }
     }
   } catch (std::exception &e) {
-    stdOut << "\nFATAL ERROR\n" << e.what() << std::endl;
+    *stdOut << "\nFATAL ERROR\n" << e.what() << std::endl;
   } catch (...) {
-    stdOut << "\nFATAL ERROR\nUnknown reasons" << std::endl;
+    *stdOut << "\nFATAL ERROR\nUnknown reasons" << std::endl;
   }
 }
 
