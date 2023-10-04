@@ -28,66 +28,10 @@ validate() {
 }
 
 tmp=$(mktemp)
+( ./build/Release/vm/cmd/vmctl docs/spec/challenge < solution.txt ) | tee "$tmp" &
 
-cin="take tablet
-use tablet
-doorway
-north
-north
-bridge
-continue
-down
-east
-take empty lantern
-west
-west
-passage
-ladder
-west
-south
-north
-take can
-look can
-use can
-west
-ladder
-darkness
-use lantern
-continue
-west
-west
-west
-west
-north
-take red coin
-north
-west
-take blue coin
-up
-take shiny coin
-down
-east
-east
-take concave coin
-down
-take corroded coin
-up
-west
-use blue coin
-use red coin
-use shiny coin
-use concave coin
-use corroded coin
-north
-take teleporter
-use teleporter
-"
-
-( ./build/Release/vm/cmd/runvm docs/spec/challenge <<< ${cin} ) | tee "$tmp" &
-
-# Keep it running for 5 seconds, then kill the process
 sleep 1
-pid=$(ps -C 'runvm' -o pid --no-headers)
+pid=$(ps -C 'vmctl' -o pid --no-headers || true)
 [ -z "${pid}" ] || {
     echo "---"
     echo "Killing process"
@@ -113,6 +57,7 @@ validate 4 "${code4}"
 codes56=(`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`)
 validate 5 "${codes56[0]}"
 validate 6 "${codes56[1]}"
+validate 7 "${codes56[2]}"
 
-code7="No idea"
-validate 7 "${code7}"
+code8="No idea"
+validate 8 "${code8}"
