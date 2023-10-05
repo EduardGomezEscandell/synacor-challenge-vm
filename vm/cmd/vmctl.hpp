@@ -1,5 +1,6 @@
 #pragma once
 
+#include "arch/arch.hpp"
 #include "helpers.hpp"
 #include "lib/cpu.hpp"
 #include "lib/memory.hpp"
@@ -67,11 +68,11 @@ inline auto next_word(std::stringstream &ss) -> std::string {
 
 struct command_preprocessor {
   command_preprocessor(std::istream &in, std::unique_ptr<coverage> &cover)
-      : in(in), commands{cmd_setr(*this), cmd_skipn(*this),
-                         cmd_step(*this), cmd_break(*this),
-                         cmd_peek(*this), cmd_instr(*this),
-                         cmd_exit(*this), cmd_cov(*this, cover),
-                         cmd_help(*this), cmd_cont(*this)} {}
+      : in(in), commands{
+                    cmd_setr(*this),   cmd_skipn(*this),  cmd_step(*this),
+                    cmd_abreak(*this), cmd_ibreak(*this), cmd_peek(*this),
+                    cmd_instr(*this),  cmd_exit(*this),   cmd_cov(*this, cover),
+                    cmd_help(*this),   cmd_cont(*this)} {}
 
   void install(SynacorVM::CPU &target);
 
@@ -90,17 +91,32 @@ struct command_preprocessor {
 
   void set_sleep(long x) { sleep = x; }
 
-  bool toggle_dbg_point(unsigned long x) {
+  bool toggle_addr_breakpoint(unsigned long x) {
     if (x > SynacorVM::Memory::heap_size) {
       throw std::runtime_error("cannot set debug point outside memory range");
     }
 
     const auto u = unsigned(x);
-    if (debug_points.contains(u)) {
-      debug_points.erase(u);
+    if (addr_breakpoints.contains(u)) {
+      addr_breakpoints.erase(u);
       return false;
     }
-    debug_points.emplace(u);
+    addr_breakpoints.emplace(u);
+    return true;
+  }
+
+  bool toggle_instr_breakpoint(Verb v) {
+    if (v >= ERROR) {
+      throw std::runtime_error(
+          "cannot set debug point outside instruction range");
+    }
+
+    const auto u = unsigned(v);
+    if (instr_breakpoints.contains(u)) {
+      instr_breakpoints.erase(u);
+      return false;
+    }
+    instr_breakpoints.emplace(u);
     return true;
   }
 
@@ -119,7 +135,8 @@ private:
   bool first_instruction = true;
 
   long sleep = 0;
-  std::set<unsigned> debug_points;
+  std::set<unsigned> addr_breakpoints;
+  std::set<unsigned> instr_breakpoints;
 
   bool command(std::string cmd, SynacorVM::execution_state es);
   void pre_exec_hook(SynacorVM::execution_state es);
@@ -168,24 +185,49 @@ private:
                 }};
     return {command.name, command};
   }
-  static std::pair<std::string, cmd> cmd_break(command_preprocessor &p) {
-    cmd command{
-        .name = "!break",
-        .usage = "!break <ADDRESS>",
-        .help = "Adds a breakpoint stop point at the specified address.",
-        .f = [&](auto, auto &argstream) -> bool {
-          const auto s = std::stoul(next_word(argstream), nullptr, 0);
-          if (p.toggle_dbg_point(s)) {
-            std::cerr << std::format("Added debug point at {:04x}\n", s)
-                      << std::flush;
-          } else {
-            std::cerr << std::format("Removed debug point at {:04x}\n", s)
-                      << std::flush;
-          }
-          return false;
-        }};
+  static std::pair<std::string, cmd> cmd_abreak(command_preprocessor &p) {
+    cmd command{.name = "!abreak",
+                .usage = "!abreak <ADDRESS>",
+                .help = "Toggles a breakpoint at the specified address.",
+                .f = [&](auto, auto &argstream) -> bool {
+                  const auto s = std::stoul(next_word(argstream), nullptr, 0);
+                  if (p.toggle_addr_breakpoint(s)) {
+                    std::cerr << std::format("Added breakpoint at {:04x}\n", s)
+                              << std::flush;
+                  } else {
+                    std::cerr
+                        << std::format("Removed breakpoint at {:04x}\n", s)
+                        << std::flush;
+                  }
+                  return false;
+                }};
     return {command.name, command};
   }
+
+  static std::pair<std::string, cmd> cmd_ibreak(command_preprocessor &p) {
+    cmd command{.name = "!ibreak",
+                .usage = "!ibreak <INSTR>",
+                .help = "Toggles a breakpoint at the specified instruction",
+                .f = [&](auto, auto &ss) -> bool {
+                  const Verb v = arch::from_string(next_word(ss));
+                  if (v == ERROR) {
+                    throw std::runtime_error("Invalid instruction name");
+                  }
+
+                  if (p.toggle_instr_breakpoint(v)) {
+                    std::cerr << std::format("Added breakpoint for {}\n",
+                                             arch::to_string(v))
+                              << std::flush;
+                  } else {
+                    std::cerr << std::format("Removed breakpoint for {}\n",
+                                             arch::to_string(v))
+                              << std::flush;
+                  }
+                  return false;
+                }};
+    return {command.name, command};
+  }
+
   static std::pair<std::string, cmd> cmd_peek(command_preprocessor &) {
     cmd command{.name = "!peek",
                 .usage = "!peek",
@@ -271,4 +313,3 @@ private:
     return {command.name, command};
   }
 };
-

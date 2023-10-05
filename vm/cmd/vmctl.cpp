@@ -103,8 +103,13 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
   }
 
   auto opcode = es.heap[es.instruction_ptr.to_uint()].to_uint();
-  const bool dbg_point = debug_points.contains(es.instruction_ptr.to_uint());
-  if (opcode != Verb::IN && sleep != 0 && !dbg_point) {
+
+  const bool addr_breakpoint =
+      addr_breakpoints.contains(es.instruction_ptr.to_uint());
+  const bool instr_breakpoint = instr_breakpoints.contains(opcode);
+
+  if (opcode != Verb::IN && sleep != 0 && !addr_breakpoint &&
+      !instr_breakpoint) {
     return;
   }
 
@@ -112,7 +117,7 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
     queued_chars = queued_chars == 0 ? 0 : queued_chars - 1;
   }
 
-  if (queued_chars > 0 && sleep != 0 && !dbg_point) {
+  if (queued_chars > 0 && sleep != 0 && !addr_breakpoint && !instr_breakpoint) {
     return;
   }
 
@@ -121,9 +126,13 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
               << "Use !help for help and !cont to continue running the VM\n"
               << std::flush;
     first_instruction = false;
-  } else if (dbg_point) {
-    std::cerr << std::format("\nStopped at debug point {:04x}\n",
+  } else if (addr_breakpoint) {
+    std::cerr << std::format("\nStopped at breakpoint {:04x}\n",
                              es.instruction_ptr.to_uint())
+              << std::flush;
+  } else if (instr_breakpoint) {
+    std::cerr << std::format("\nStopped at instruction {}\n",
+                             arch::to_string(Verb(opcode)))
               << std::flush;
   }
 
