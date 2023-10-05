@@ -96,6 +96,8 @@ void command_preprocessor::install(SynacorVM::CPU &target) {
 }
 
 void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
+  const auto lock = defer([this]() { sleep = sleep < 0 ? sleep : sleep - 1; });
+
   for (auto const &hook : other_prehooks) {
     hook.second(es);
   }
@@ -103,7 +105,6 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
   auto opcode = es.heap[es.instruction_ptr.to_uint()].to_uint();
   const bool dbg_point = debug_points.contains(es.instruction_ptr.to_uint());
   if (opcode != Verb::IN && sleep != 0 && !dbg_point) {
-    --sleep;
     return;
   }
 
@@ -112,7 +113,6 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
   }
 
   if (queued_chars > 0 && sleep != 0 && !dbg_point) {
-    --sleep;
     return;
   }
 
@@ -121,9 +121,6 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
               << "Use !help for help and !cont to continue running the VM\n"
               << std::flush;
     first_instruction = false;
-  } else if (sleep == 0) {
-    --sleep;
-    std::cerr << "\nWoke up after sleeping\n" << std::flush;
   } else if (dbg_point) {
     std::cerr << std::format("\nStopped at debug point {:04x}\n",
                              es.instruction_ptr.to_uint())
@@ -139,11 +136,6 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
     }
 
     std::getline(in, buff);
-
-    if (buff == "!cont" && opcode != Verb::IN) {
-      --sleep;
-      return;
-    }
 
     bool is_command = buff.starts_with("!");
     if (is_command && buff.starts_with("!!")) {

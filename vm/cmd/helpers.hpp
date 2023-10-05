@@ -1,9 +1,13 @@
 #pragma once
 
+#include <concepts>
 #include <format>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "assembler/lib/grammar.hpp"
 #include "lib/cpu.hpp"
@@ -28,3 +32,26 @@ inline std::basic_string<std::byte> read_binary(std::string file_name) {
   return buffer;
 }
 
+template <typename T> struct deferrer {
+  T callable;
+  ~deferrer() { callable(); }
+
+  deferrer(T &&t) : callable(std::forward<T &&>(t)) {}
+
+  deferrer(deferrer const &other) = delete;
+
+  deferrer(deferrer &&other) { *this = other; }
+
+  deferrer &operator=(deferrer &&other) {
+    if (this == &other) {
+      return *this;
+    }
+    std::swap(callable, other.callable);
+    return *this;
+  }
+};
+
+// defer calls the lambda when the returned object is destroyed.
+template <typename F> [[nodiscard]] constexpr auto defer(F &&f) {
+  return deferrer<F>(std::forward<F &&>(f));
+}
