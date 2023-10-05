@@ -62,8 +62,6 @@ void command_preprocessor::toggle_hook(
   return;
 }
 
-
-
 bool command_preprocessor::command(std::string cmd,
                                    SynacorVM::execution_state es) {
   std::stringstream ss{cmd};
@@ -118,26 +116,26 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
     return;
   }
 
+  if (first_instruction) {
+    std::cerr << "This is your chance to pre-populate the input.\n"
+              << "Use !help for help and !cont to continue running the VM\n"
+              << std::flush;
+    first_instruction = false;
+  } else if (sleep == 0) {
+    --sleep;
+    std::cerr << "\nWoke up after sleeping\n" << std::flush;
+  } else if (dbg_point) {
+    std::cerr << std::format("\nStopped at debug point {:04x}\n",
+                             es.instruction_ptr.to_uint())
+              << std::flush;
+  }
+
   while (queued_chars == 0 || opcode != Verb::IN) {
     std::string buff;
 
     if (in.eof()) {
       enqueue(std::char_traits<char>::eof());
       return;
-    }
-
-    if (first_instruction) {
-      std::cerr << "This is your chance to pre-populate the input.\n"
-                << "Use !help for help and !cont to continue running the VM\n"
-                << std::flush;
-      first_instruction = false;
-    } else if (sleep == 0 && !first_instruction) {
-      --sleep;
-      std::cerr << "\nWoke up after sleeping\n" << std::flush;
-    } else if (dbg_point) {
-      std::cerr << std::format("\nStopped at debug point {:04x}\n",
-                               es.instruction_ptr.to_uint())
-                << std::flush;
     }
 
     std::getline(in, buff);
