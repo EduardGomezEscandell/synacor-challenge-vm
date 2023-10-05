@@ -68,7 +68,7 @@ inline auto next_word(std::stringstream &ss) -> std::string {
 struct command_preprocessor {
   command_preprocessor(std::istream &in, std::unique_ptr<coverage> &cover)
       : in(in), commands{cmd_setr(*this), cmd_skipn(*this),
-                         cmd_step(*this), cmd_dbg(*this),
+                         cmd_step(*this), cmd_break(*this),
                          cmd_peek(*this), cmd_instr(*this),
                          cmd_exit(*this), cmd_cov(*this, cover),
                          cmd_help(*this), cmd_cont(*this)} {}
@@ -168,7 +168,7 @@ private:
                 }};
     return {command.name, command};
   }
-  static std::pair<std::string, cmd> cmd_dbg(command_preprocessor &p) {
+  static std::pair<std::string, cmd> cmd_break(command_preprocessor &p) {
     cmd command{
         .name = "!break",
         .usage = "!break <ADDRESS>",
@@ -189,7 +189,7 @@ private:
   static std::pair<std::string, cmd> cmd_peek(command_preprocessor &) {
     cmd command{.name = "!peek",
                 .usage = "!peek",
-                .help = "Peeks into the next instruction to execute. It also "
+                .help = "Shows the next instruction to execute. It also "
                         "displays the registers",
                 .f = [](auto es, auto &) -> bool {
                   std::cerr << peek_instruction(es) << std::flush;
@@ -212,9 +212,8 @@ private:
   static std::pair<std::string, cmd> cmd_exit(command_preprocessor &p) {
     cmd command{.name = "!exit",
                 .usage = "!exit",
-                .help =
-                    "Overwrites the address the instruction pointer to write a "
-                    "HALT, hence stopping the VM",
+                .help = "Stops the machine by overwriting a HALT at the "
+                        "current position pointed by the instruction pointer",
                 .f = [&](auto es, auto &) -> bool {
                   es.heap[es.instruction_ptr.to_uint()] =
                       SynacorVM::Word(static_cast<unsigned>(Verb::HALT));
@@ -272,3 +271,4 @@ private:
     return {command.name, command};
   }
 };
+
