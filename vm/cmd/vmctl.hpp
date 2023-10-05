@@ -192,11 +192,7 @@ private:
                 .help = "Peeks into the next instruction to execute. It also "
                         "displays the registers",
                 .f = [](auto es, auto &) -> bool {
-                  std::stringstream ss;
-                  for (auto &r : es.registers) {
-                    ss << std::format("  {:04x}", r.to_uint());
-                  }
-                  std::cerr << ss.str() + "\n" << std::flush;
+                  std::cerr << peek_instruction(es) << std::flush;
                   return false;
                 }};
     return {command.name, command};
