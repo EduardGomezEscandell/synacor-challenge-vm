@@ -17,7 +17,7 @@ inline void test_cpu(std::string_view test_name) {
   std::stringstream out;
   SynacorVM::Memory ram;
 
-  SynacorVM::CPU vm{.memory = ram, .stdOut = out, .stdIn = in};
+  SynacorVM::CPU vm{.memory = ram, .stdOut = &out, .stdIn = &in};
 
   const auto buff = testutils::read_binary(testutils::fixture_path(test_name));
   ram.load(buff);

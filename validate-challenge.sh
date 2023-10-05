@@ -54,10 +54,8 @@ validate 3 "${code3}"
 code4=`grep " on the tablet.  Perhaps it's some kind of code?" "$tmp" | sed 's#^[^"]\+"\(\w\+\)".*$#\1#'`
 validate 4 "${code4}"
 
-codes56=(`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`)
-validate 5 "${codes56[0]}"
-validate 6 "${codes56[1]}"
-validate 7 "${codes56[2]}"
-
-code8="No idea"
-validate 8 "${code8}"
+codes=(`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`)
+validate 5 "${codes[0]}"
+validate 6 "${codes[1]}"
+validate 7 "${codes[2]}"
+validate 8 "${code8[3]}"
