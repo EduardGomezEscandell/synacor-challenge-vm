@@ -53,12 +53,12 @@ void command_preprocessor::toggle_hook(
     std::function<void(SynacorVM::execution_state)> &&f) {
   if (auto it = other_prehooks.find(name); it != other_prehooks.end()) {
     other_prehooks.erase(it);
-    std::cerr << std::format("Disabled {}", name) << std::endl;
+    std::cerr << std::format("Disabled {}\n", name) << std::flush;
     return;
   }
 
   other_prehooks[name] = std::forward<decltype(f) &&>(f);
-  std::cerr << std::format("Enabled {}", name) << std::endl;
+  std::cerr << std::format("Enabled {}\n", name) << std::flush;
   return;
 }
 
@@ -75,9 +75,9 @@ std::map<std::string, bool (*)(command_preprocessor &,
                 const auto reg = std::stoul(next(argstream), nullptr, 0);
                 const auto value = std::stoul(next(argstream), nullptr, 0);
                 es.registers.at(reg) = SynacorVM::Word(value);
-                std::cerr << std::format("Set register {} to 0x{:04x}", reg,
+                std::cerr << std::format("Set register {} to 0x{:04x}\n", reg,
                                          value)
-                          << std::endl;
+                          << std::flush;
                 return false;
               }},
              {"!sleep",
@@ -86,9 +86,9 @@ std::map<std::string, bool (*)(command_preprocessor &,
                 p.set_sleep(s);
                 std::cerr << std::format(
                                  "You'll be prompted again in {} instructions "
-                                 "(Unless input is needed before)",
+                                 "(Unless input is needed before)\n",
                                  s)
-                          << std::endl;
+                          << std::flush;
                 return true;
               }},
              {"!step",
@@ -100,26 +100,27 @@ std::map<std::string, bool (*)(command_preprocessor &,
               [](auto &p, auto, auto &argstream) -> bool {
                 const auto s = std::stoul(next(argstream), nullptr, 0);
                 if (p.toggle_dbg_point(s)) {
-                  std::cerr << std::format("Added debug point at {:04x}", s)
-                            << std::endl;
+                  std::cerr << std::format("Added debug point at {:04x}\n", s)
+                            << std::flush;
                 } else {
-                  std::cerr << std::format("Removed debug point at {:04x}", s)
-                            << std::endl;
+                  std::cerr << std::format("Removed debug point at {:04x}\n", s)
+                            << std::flush;
                 }
                 return false;
               }},
              {"!getr",
               [](auto &, auto es, auto &) -> bool {
+                std::stringstream ss;
                 for (auto &r : es.registers) {
-                  std::cerr << std::format("  {:04x}", r.to_uint());
+                  ss << std::format("  {:04x}", r.to_uint());
                 }
-                std::cerr << std::endl;
+                std::cerr << ss.str() + "\n" << std::flush;
                 return false;
               }},
              {"!instr",
               [](auto &p, auto, auto &) -> bool {
                 p.toggle_hook("instruction printing", [](auto es) {
-                  std::cerr << peek_instruction(es) << std::endl;
+                  std::cerr << peek_instruction(es) << std::flush;
                 });
                 return false;
               }},
@@ -127,7 +128,7 @@ std::map<std::string, bool (*)(command_preprocessor &,
               [](auto &p, auto es, auto &) -> bool {
                 es.heap[es.instruction_ptr.to_uint()] =
                     SynacorVM::Word(static_cast<unsigned>(Verb::HALT));
-                std::cerr << "Exiting" << std::endl;
+                std::cerr << "Exiting\n" << std::flush;
                 p.enqueue(std::char_traits<char>::eof());
                 return false;
               }},
@@ -141,8 +142,8 @@ std::map<std::string, bool (*)(command_preprocessor &,
               }},
              {"!help", [](auto &, auto, auto &) -> bool {
                 std::cerr << "Use any of these commads:\n"
-                          << "You can escape the leading ! by writting !!"
-                          << std::endl;
+                          << "You can escape the leading ! by writting !!\n"
+                          << std::flush;
                 for (auto const &cmd : commands) {
                   std::cerr << " > " << cmd.first << '\n';
                 }
@@ -157,20 +158,20 @@ bool command_preprocessor::command(std::string cmd,
     auto verb = next(ss);
     auto it = commands.find(verb);
     if (it == commands.end()) {
-      std::cerr << std::format("Unkown instruction {}", verb) << std::endl;
+      std::cerr << std::format("Unkown instruction {}\n", verb) << std::flush;
       return false;
     }
 
     return it->second(*this, es, ss);
 
   } catch (std::exception &e) {
-    std::cerr << std::format("Failed to execute command '{}': {}", cmd,
+    std::cerr << std::format("Failed to execute command '{}': {}\n", cmd,
                              e.what())
-              << std::endl;
+              << std::flush;
     return false;
   } catch (...) {
-    std::cerr << std::format("Failed to execute command '{}'", cmd)
-              << std::endl;
+    std::cerr << std::format("Failed to execute command '{}'\n", cmd)
+              << std::flush;
     return false;
   }
 }
@@ -214,16 +215,16 @@ void command_preprocessor::pre_exec_hook(SynacorVM::execution_state es) {
 
     if (first_instruction) {
       std::cerr << "This is your chance to pre-populate the input.\n"
-                << "Use !help for help and !cont to continue running the VM"
-                << std::endl;
+                << "Use !help for help and !cont to continue running the VM\n"
+                << std::flush;
       first_instruction = false;
     } else if (sleep == 0 && !first_instruction) {
       --sleep;
-      std::cerr << "\nWoke up after sleeping" << std::endl;
+      std::cerr << "\nWoke up after sleeping\n" << std::flush;
     } else if (dbg_point) {
-      std::cerr << std::format("\nStopped at debug point {:04x}",
+      std::cerr << std::format("\nStopped at debug point {:04x}\n",
                                es.instruction_ptr.to_uint())
-                << std::endl;
+                << std::flush;
     }
 
     std::getline(in, buff);
@@ -292,6 +293,7 @@ std::string peek_instruction(SynacorVM::execution_state es) {
   for (auto &r : es.registers) {
     ss << std::format("  {:04x}", r.to_uint());
   }
+  ss << '\n';
 
   return ss.str();
 }
