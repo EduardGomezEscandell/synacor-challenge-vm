@@ -52,11 +52,11 @@ north
 take teleporter
 use teleporter
 !setr 7 0xff
-!dbg 0x1587
+!break 0x1587
 use teleporter
 !setr 0 0
-!dbg 0x1587
-!dbg 0x17a8
+!break 0x1587
+!break 0x17a8
 !cont
 !setr 0 6
 !setr 1 5

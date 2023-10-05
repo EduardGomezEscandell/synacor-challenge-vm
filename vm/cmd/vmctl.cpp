@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   SynacorVM::Memory ram;
   SynacorVM::CPU vm{.memory = ram};
 
-  command_preprocessor p(std::cin);
+  command_preprocessor p(std::cin, cov);
   p.install(vm);
 
   ram.load(read_binary(argv[1]));
@@ -62,107 +62,20 @@ void command_preprocessor::toggle_hook(
   return;
 }
 
-auto next(std::stringstream &ss) -> std::string {
-  std::string v;
-  ss >> v;
-  return v;
-};
 
-std::map<std::string, bool (*)(command_preprocessor &,
-                               SynacorVM::execution_state, std::stringstream &)>
-    commands{{"!setr",
-              [](auto &, auto es, auto &argstream) -> bool {
-                const auto reg = std::stoul(next(argstream), nullptr, 0);
-                const auto value = std::stoul(next(argstream), nullptr, 0);
-                es.registers.at(reg) = SynacorVM::Word(value);
-                std::cerr << std::format("Set register {} to 0x{:04x}\n", reg,
-                                         value)
-                          << std::flush;
-                return false;
-              }},
-             {"!sleep",
-              [](auto &p, auto, auto &argstream) -> bool {
-                const auto s = std::stoll(next(argstream), nullptr, 0);
-                p.set_sleep(s);
-                std::cerr << std::format(
-                                 "You'll be prompted again in {} instructions "
-                                 "(Unless input is needed before)\n",
-                                 s)
-                          << std::flush;
-                return true;
-              }},
-             {"!step",
-              [](auto &p, auto, auto &) -> bool {
-                p.set_sleep(1);
-                return true;
-              }},
-             {"!dbg",
-              [](auto &p, auto, auto &argstream) -> bool {
-                const auto s = std::stoul(next(argstream), nullptr, 0);
-                if (p.toggle_dbg_point(s)) {
-                  std::cerr << std::format("Added debug point at {:04x}\n", s)
-                            << std::flush;
-                } else {
-                  std::cerr << std::format("Removed debug point at {:04x}\n", s)
-                            << std::flush;
-                }
-                return false;
-              }},
-             {"!getr",
-              [](auto &, auto es, auto &) -> bool {
-                std::stringstream ss;
-                for (auto &r : es.registers) {
-                  ss << std::format("  {:04x}", r.to_uint());
-                }
-                std::cerr << ss.str() + "\n" << std::flush;
-                return false;
-              }},
-             {"!instr",
-              [](auto &p, auto, auto &) -> bool {
-                p.toggle_hook("instruction printing", [](auto es) {
-                  std::cerr << peek_instruction(es) << std::flush;
-                });
-                return false;
-              }},
-             {"!exit",
-              [](auto &p, auto es, auto &) -> bool {
-                es.heap[es.instruction_ptr.to_uint()] =
-                    SynacorVM::Word(static_cast<unsigned>(Verb::HALT));
-                std::cerr << "Exiting\n" << std::flush;
-                p.enqueue(std::char_traits<char>::eof());
-                return false;
-              }},
-             {"!covr",
-              [](auto &p, auto, auto) -> bool {
-                if (cov.get() == nullptr) {
-                  cov = std::make_unique<coverage>();
-                }
-                p.toggle_hook("compute coverage", cov->pre_exec_hook());
-                return false;
-              }},
-             {"!help", [](auto &, auto, auto &) -> bool {
-                std::cerr << "Use any of these commads:\n"
-                          << "You can escape the leading ! by writting !!\n"
-                          << std::flush;
-                for (auto const &cmd : commands) {
-                  std::cerr << " > " << cmd.first << '\n';
-                }
-                std::cerr << std::flush;
-                return false;
-              }}};
 
 bool command_preprocessor::command(std::string cmd,
                                    SynacorVM::execution_state es) {
   std::stringstream ss{cmd};
   try {
-    auto verb = next(ss);
+    auto verb = next_word(ss);
     auto it = commands.find(verb);
     if (it == commands.end()) {
       std::cerr << std::format("Unkown instruction {}\n", verb) << std::flush;
       return false;
     }
 
-    return it->second(*this, es, ss);
+    return it->second.f(es, ss);
 
   } catch (std::exception &e) {
     std::cerr << std::format("Failed to execute command '{}': {}\n", cmd,
