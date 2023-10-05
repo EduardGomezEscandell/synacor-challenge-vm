@@ -224,7 +224,7 @@ private:
                       SynacorVM::Word(static_cast<unsigned>(Verb::HALT));
                   std::cerr << "Exiting\n" << std::flush;
                   p.enqueue(std::char_traits<char>::eof());
-                  return false;
+                  return true;
                 }};
     return {command.name, command};
   }
