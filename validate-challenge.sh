@@ -30,7 +30,7 @@ validate() {
 tmp=$(mktemp)
 ( ./build/Release/vm/cmd/vmctl docs/spec/challenge < solution.txt ) | tee "$tmp" &
 
-sleep 1
+sleep 2
 pid=$(ps -C 'vmctl' -o pid --no-headers || true)
 [ -z "${pid}" ] || {
     echo "---"
@@ -50,7 +50,6 @@ validate 2 "${code2}"
 code3=`grep 'The self-test completion code is:' "$tmp" | sed 's#^.*: \(.*\)$#\1#'`
 validate 3 "${code3}"
 
-
 code4=`grep " on the tablet.  Perhaps it's some kind of code?" "$tmp" | sed 's#^[^"]\+"\(\w\+\)".*$#\1#'`
 validate 4 "${code4}"
 
@@ -58,4 +57,4 @@ codes=(`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`)
 validate 5 "${codes[0]}"
 validate 6 "${codes[1]}"
 validate 7 "${codes[2]}"
-validate 8 "${code8[3]}"
+validate 8 "${codes[3]}"

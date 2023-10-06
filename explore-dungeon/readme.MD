@@ -1,1 +1,0 @@
-This program brute-forces possible stdin inputs.
