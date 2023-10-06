@@ -6,8 +6,11 @@
 #include "lib/memory.hpp"
 
 #include <concepts>
+#include <cstdio>
+#include <format>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -72,7 +75,7 @@ struct command_preprocessor {
                     cmd_setr(*this),   cmd_skipn(*this),  cmd_step(*this),
                     cmd_abreak(*this), cmd_ibreak(*this), cmd_peek(*this),
                     cmd_instr(*this),  cmd_exit(*this),   cmd_cov(*this, cover),
-                    cmd_help(*this),   cmd_cont(*this)} {}
+                    cmd_help(*this),   cmd_cont(*this),   cmd_dump(*this)} {}
 
   void install(SynacorVM::CPU &target);
 
@@ -310,6 +313,38 @@ private:
         .usage = "!cont",
         .help = "Continues execution (may not appear so if input is needed).",
         .f = [&](auto, auto &) -> bool { return true; }};
+    return {command.name, command};
+  }
+
+  static std::pair<std::string, cmd> cmd_dump(command_preprocessor &) {
+    static constexpr auto dumpfile = "heap.bin";
+    cmd command{
+        .name = "!dump",
+        .usage = "!dump",
+        .help = std::format("Dumps the current state of the memory to file {}",
+                            dumpfile),
+        .f = [&](SynacorVM::execution_state es, auto &) -> bool {
+          const auto last_nonzero =
+              std::find_if_not(es.heap.crbegin(), es.heap.crend(),
+                               [](SynacorVM::Word const word) -> bool {
+                                 return word.to_int() == 0;
+                               });
+
+          const auto size =
+              2 * std::size_t(std::distance(last_nonzero, es.heap.crend()));
+
+          std::unique_ptr<FILE, int (*)(FILE *)> out(::fopen(dumpfile, "wb"),
+                                                     &fclose);
+
+          const auto r = ::fwrite(&es.heap[0], size, 1, out.get());
+          if (r != 1) {
+            throw std::runtime_error("Something went wrong writing to file");
+          }
+          std::cerr << std::format("Memory dumped to file '{}'\n", dumpfile)
+                    << std::flush;
+
+          return false;
+        }};
     return {command.name, command};
   }
 };
