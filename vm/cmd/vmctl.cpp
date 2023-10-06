@@ -183,22 +183,27 @@ std::string parse_value(SynacorVM::Word w) {
 }
 
 std::string peek_instruction(SynacorVM::execution_state es) {
-  const SynacorVM::Word verb = es.heap[es.instruction_ptr.to_uint()];
+  auto iptr = es.instruction_ptr.to_uint();
+  const SynacorVM::Word verb = es.heap[iptr];
 
   const auto v = static_cast<Verb>(verb.to_uint());
 
   std::stringstream ss;
 
-  ss << std::format("0x{:04x} | {}", es.instruction_ptr.to_uint(),
-                    arch::to_string(v));
-  const auto argc = arch::argument_count(v);
+  auto argc = arch::argument_count(v);
+  std::string verbname{arch::to_string(v)};
   if (argc < 0) {
-    ss << std::format("UNKNOWN {:x}\n", verb.to_uint());
-    return ss.str();
+    argc = 0;
+    verbname = "???";
   }
 
+  ss << std::format("0x{:04x} | {: <4}", iptr, verbname);
+
   for (auto i = 0u; i < unsigned(argc); ++i) {
-    ss << ' ' << parse_value(es.heap[es.instruction_ptr.to_uint() + 1 + i]);
+    ss << std::format(" {: >4}", parse_value(es.heap[iptr + 1 + i]));
+  }
+  for (auto i = argc; i < 3; ++i) {
+    ss << std::format("     ");
   }
 
   ss << " | ";

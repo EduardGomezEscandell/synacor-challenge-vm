@@ -133,7 +133,6 @@ constexpr int argument_count(Verb v) {
       break;
   }
 
-  assert(0);
   return -1;
 }
 
