@@ -58,5 +58,30 @@ use teleporter
 !setr 0 0
 !skip 4
 !setr 0 6
-!skip 10000
+!cont
+north
+north
+north
+north
+north
+north
+north
+north
+north
+take orb
+north
+east
+east
+north
+west
+south
+east
+east
+west
+north
+north
+east
+vault
+take mirror
+use mirror
 !exit

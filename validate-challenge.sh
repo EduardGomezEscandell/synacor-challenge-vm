@@ -30,7 +30,7 @@ validate() {
 tmp=$(mktemp)
 ( ./build/Release/vm/cmd/vmctl docs/spec/challenge < solution.txt ) | tee "$tmp" &
 
-sleep 2
+sleep 1.5
 pid=$(ps -C 'vmctl' -o pid --no-headers || true)
 [ -z "${pid}" ] || {
     echo "---"
@@ -57,4 +57,21 @@ codes=(`grep '^    [a-zA-Z]\{12\}$'  "$tmp"`)
 validate 5 "${codes[0]}"
 validate 6 "${codes[1]}"
 validate 7 "${codes[2]}"
-validate 8 "${codes[3]}"
+
+tmp=`grep "scrawled in charcoal on your forehead." "$tmp" | sed 's#^[^"]\+"\(\w\+\)".*$#\1#'`
+
+# Reversed because it is mirrored
+code8=""
+for (( i=${#tmp}; i>=0; i-- )); do
+    ch=${tmp:$i:1}
+    case $ch in
+        'p') ch='q';;
+        'q') ch='p';;
+        'd') ch='b';;
+        'b') ch='d';;
+    esac
+    code8="${code8}${ch}"
+done
+
+
+validate 8 "${code8}"
