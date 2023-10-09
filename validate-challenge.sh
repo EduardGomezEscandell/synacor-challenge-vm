@@ -28,16 +28,7 @@ validate() {
 }
 
 tmp=$(mktemp)
-( ./build/Release/vm/cmd/vmctl docs/spec/challenge < solution.txt ) | tee "$tmp" &
-
-sleep 1.5
-pid=$(ps -C 'vmctl' -o pid --no-headers || true)
-[ -z "${pid}" ] || {
-    echo "---"
-    echo "Killing process"
-    kill ${pid}
-    echo "Process killed"
-}
+./build/Release/vm/cmd/vmctl docs/spec/challenge < solution.txt | tee "$tmp"
 
 echo "---"
 
