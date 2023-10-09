@@ -72,10 +72,11 @@ inline auto next_word(std::stringstream &ss) -> std::string {
 struct command_preprocessor {
   command_preprocessor(std::istream &in, std::unique_ptr<coverage> &cover)
       : in(in), commands{
-                    cmd_setr(*this),   cmd_skipn(*this),  cmd_step(*this),
-                    cmd_abreak(*this), cmd_ibreak(*this), cmd_peek(*this),
-                    cmd_instr(*this),  cmd_exit(*this),   cmd_cov(*this, cover),
-                    cmd_help(*this),   cmd_cont(*this),   cmd_dump(*this)} {}
+                    cmd_setr(*this),   cmd_rmem(*this),       cmd_wmem(*this),
+                    cmd_skipn(*this),  cmd_step(*this),       cmd_abreak(*this),
+                    cmd_ibreak(*this), cmd_peek(*this),       cmd_instr(*this),
+                    cmd_exit(*this),   cmd_cov(*this, cover), cmd_help(*this),
+                    cmd_cont(*this),   cmd_dump(*this)} {}
 
   void install(SynacorVM::CPU &target);
 
@@ -152,8 +153,69 @@ private:
         .f = [&](auto es, auto &argstream) -> bool {
           const auto reg = std::stoul(next_word(argstream), nullptr, 0);
           const auto value = std::stoul(next_word(argstream), nullptr, 0);
+          if (value > 0xffff) {
+            throw std::runtime_error(
+                "The value must be in the range [0, 0xfff]");
+          }
           es.registers.at(reg) = SynacorVM::Word(value);
           std::cerr << std::format("Set register {} to 0x{:04x}\n", reg, value)
+                    << std::flush;
+          return false;
+        }};
+    return {command.name, command};
+  }
+  static std::pair<std::string, cmd> cmd_rmem(command_preprocessor &) {
+    cmd command{.name = "!rmem",
+                .usage = "!rmem <ADDR>",
+                .help = "reads out the line of memory ADDR is in",
+                .f = [&](auto es, auto &argstream) -> bool {
+                  const auto addr =
+                      std::stoul(next_word(argstream), nullptr, 0);
+
+                  const auto first = (addr / 8) * 8;
+                  const auto last = first + 7;
+
+                  std::stringstream ss;
+                  // Print address
+                  ss << std::format("0x{:04x} | ", first);
+
+                  // Print hext
+                  for (auto i = first; i <= last; ++i) {
+                    ss << std::format(" {:04x}", es.heap.at(i).to_uint());
+                  }
+                  ss << " | ";
+
+                  // Print string representation
+                  for (auto i = first; i <= last; ++i) {
+                    auto v = es.heap.at(i).to_uint();
+                    char ch = '.';
+                    if (v >= ' ' && v <= '~') {
+                      ch = static_cast<char>(v);
+                    }
+                    ss << ch;
+                  }
+                  ss << '\n';
+
+                  std::cerr << ss.str() << std::flush;
+                  return false;
+                }};
+    return {command.name, command};
+  }
+  static std::pair<std::string, cmd> cmd_wmem(command_preprocessor &) {
+    cmd command{
+        .name = "!wmem",
+        .usage = "!wmem <ADDR> <VALUE>",
+        .help = "writes value VALUE into memeory address ADDR.",
+        .f = [&](auto es, auto &argstream) -> bool {
+          const auto addr = std::stoul(next_word(argstream), nullptr, 0);
+          const auto value = std::stoul(next_word(argstream), nullptr, 0);
+          if (value > 0xffff) {
+            throw std::runtime_error(
+                "The value must be in the range [0, 0xfff]");
+          }
+          es.heap.at(addr) = SynacorVM::Word(value);
+          std::cerr << std::format("Set memory address 0x{:04x} to 0x{:04x}\n",
+                                   addr, value)
                     << std::flush;
           return false;
         }};
@@ -169,10 +231,7 @@ private:
         .f = [&](auto, auto &argstream) -> bool {
           const auto s = std::stoll(next_word(argstream), nullptr, 0);
           p.set_sleep(s);
-          std::cerr << std::format(
-                           "You'll be prompted again in {} instructions "
-                           "(Unless input is needed before)\n",
-                           s)
+          std::cerr << std::format("Skipping {} instructions ahead\n", s)
                     << std::flush;
           return true;
         }};
